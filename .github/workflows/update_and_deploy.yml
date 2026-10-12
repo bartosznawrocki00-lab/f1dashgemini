@@ -1,0 +1,57 @@
+name: Update F1 Data & Deploy to GitHub Pages
+
+on:
+  schedule:
+    - cron: '0 6,10,14,18 * * 4,5,6'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  update-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pobierz kod repozytorium
+        uses: actions/checkout@v4
+
+      - name: Skonfiguruj środowisko Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Zainstaluj biblioteki
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Pobierz aktualizacje i zbuduj stronę
+        run: |
+          python src/update.py
+
+      - name: Zapisz nowe dane w repozytorium (jeśli pojawiły się zmiany)
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add data/upgrades.json
+          git commit -m "chore(data): automatyczna aktualizacja poprawek F1 [skip ci]" || echo "Brak nowych danych do zapisu"
+          git push || echo "Nic do wypchnięcia"
+
+      - name: Skonfiguruj GitHub Pages
+        uses: actions/configure-pages@v4
+
+      - name: Wyślij artefakt strony (katalog dist/)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+
+      - name: Wdróż na GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
