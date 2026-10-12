@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div x-data='{
+  selectedGp: "Wszystkie",
+  selectedTeam: "Wszystkie",
+  selectedReasonType: "Wszystkie",
+  searchQuery: "",
+  upgrades: {{ upgrades_json | safe }},
+
+  get filteredUpgrades() {
+    return this.upgrades.filter(item => {
+      const matchGp = this.selectedGp === "Wszystkie" || item.grand_prix === this.selectedGp;
+      const matchTeam = this.selectedTeam === "Wszystkie" || item.team === this.selectedTeam;
+      
+      let matchType = true;
+      if (this.selectedReasonType === "Performance") {
+        matchType = item.reason.toLowerCase().includes("performance");
+      } else if (this.selectedReasonType === "Circuit Specific") {
+        matchType = item.reason.toLowerCase().includes("circuit");
+      }
+
+      const q = this.searchQuery.toLowerCase().trim();
+      const matchSearch = !q || 
+        item.component.toLowerCase().includes(q) || 
+        item.team.toLowerCase().includes(q) || 
+        item.change_detail.toLowerCase().includes(q) ||
+        item.description.toLowerCase().includes(q);
+
+      return matchGp && matchTeam && matchType && matchSearch;
+    });
+  },
+
+  get activeTeamsCount() {
+    const teams = new Set(this.filteredUpgrades.map(u => u.team));
+    return teams.size;
+  }
+}'>
+
+  <!-- Statystyki na górze -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <div class="bg-surface border border-bordercol rounded-xl p-4">
+      <div class="text-xs uppercase tracking-wider text-neutral-400 font-semibold mb-1">Wyświetlane zmiany</div>
+      <div class="text-2xl font-black text-white" x-text="filteredUpgrades.length"></div>
+    </div>
+    <div class="bg-surface border border-bordercol rounded-xl p-4">
+      <div class="text-xs uppercase tracking-wider text-neutral-400 font-semibold mb-1">Zespoły ze zmianami</div>
+      <div class="text-2xl font-black text-white" x-text="activeTeamsCount"></div>
+    </div>
+    <div class="bg-surface border border-bordercol rounded-xl p-4">
+      <div class="text-xs uppercase tracking-wider text-neutral-400 font-semibold mb-1">Wszystkie w bazie</div>
+      <div class="text-2xl font-black text-neutral-300" x-text="upgrades.length"></div>
+    </div>
+    <div class="bg-surface border border-bordercol rounded-xl p-4">
+      <div class="text-xs uppercase tracking-wider text-neutral-400 font-semibold mb-1">Dostępne GP</div>
+      <div class="text-2xl font-black text-neutral-300">{{ grand_prix_list|length }}</div>
+    </div>
+  </div>
+
+  <!-- Panel filtrów -->
+  <div class="bg-surface border border-bordercol rounded-xl p-5 mb-8 shadow-sm">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- Filtr GP -->
+      <div>
+        <label class="block text-xs uppercase font-bold text-neutral-400 mb-2">Grand Prix</label>
+        <select x-model="selectedGp" class="w-full bg-carbon border border-bordercol rounded-lg px-3 py-2 text-sm text-neutral-200 focus:border-f1red outline-none">
+          <option value="Wszystkie">Wszystkie Grand Prix</option>
+          {% for gp in grand_prix_list %}
+          <option value="{{ gp }}">{{ gp }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Filtr Zespół -->
+      <div>
+        <label class="block text-xs uppercase font-bold text-neutral-400 mb-2">Konstruktor</label>
+        <select x-model="selectedTeam" class="w-full bg-carbon border border-bordercol rounded-lg px-3 py-2 text-sm text-neutral-200 focus:border-f1red outline-none">
+          <option value="Wszystkie">Wszystkie zespoły</option>
+          {% for team in teams_list %}
+          <option value="{{ team }}">{{ team }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Filtr Typ zmiany -->
+      <div>
+        <label class="block text-xs uppercase font-bold text-neutral-400 mb-2">Cel modyfikacji</label>
+        <select x-model="selectedReasonType" class="w-full bg-carbon border border-bordercol rounded-lg px-3 py-2 text-sm text-neutral-200 focus:border-f1red outline-none">
+          <option value="Wszystkie">Wszystkie cele</option>
+          <option value="Performance">Tylko Performance (Docisk)</option>
+          <option value="Circuit Specific">Tylko Circuit Specific (Dopasowanie)</option>
+        </select>
+      </div>
+
+      <!-- Szukajka tekstowa -->
+      <div>
+        <label class="block text-xs uppercase font-bold text-neutral-400 mb-2">Szukaj w opisie</label>
+        <input type="text" x-model="searchQuery" placeholder="np. Floor, Front wing, DRS..." class="w-full bg-carbon border border-bordercol rounded-lg px-3 py-2 text-sm text-neutral-200 placeholder-neutral-600 focus:border-f1red outline-none">
+      </div>
+    </div>
+  </div>
+
+  <!-- Siatka kart z uaktualnieniami -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <template x-for="item in filteredUpgrades" :key="item.id">
+      <div class="bg-surface border border-bordercol rounded-xl p-5 hover:border-neutral-600 transition flex flex-col justify-between group">
+        <div>
+          <!-- Header karty -->
+          <div class="flex items-center justify-between mb-3.5">
+            <span class="text-xs font-black px-2.5 py-0.5 rounded tracking-wide uppercase bg-neutral-900 border border-neutral-700 text-neutral-200"
+                  x-text="item.team"></span>
+            <span class="text-xs text-neutral-400 flex items-center gap-1">
+              🏁 <span x-text="item.grand_prix"></span>
+            </span>
+          </div>
+
+          <!-- Nazwa elementu -->
+          <h3 class="text-base font-bold text-white mb-1 group-hover:text-red-400 transition" x-text="item.component"></h3>
+
+          <!-- Typ celu modyfikacji -->
+          <div class="mb-4">
+            <span class="text-[11px] font-medium px-2 py-0.5 rounded"
+                  :class="item.reason.toLowerCase().includes('circuit') ? 'bg-amber-950/60 text-amber-300 border border-amber-800' : 'bg-blue-950/60 text-blue-300 border border-blue-800'"
+                  x-text="item.reason"></span>
+          </div>
+
+          <!-- Różnice geometryczne i opis -->
+          <div class="space-y-2.5 text-xs text-neutral-300 border-t border-bordercol/60 pt-3">
+            <template x-if="item.change_detail">
+              <div>
+                <span class="text-neutral-400 font-semibold block text-[11px] uppercase tracking-wider mb-0.5">Różnice geometryczne</span>
+                <p class="leading-relaxed bg-carbon/50 p-2.5 rounded-lg border border-bordercol/40" x-text="item.change_detail"></p>
+              </div>
+            </template>
+            <template x-if="item.description">
+              <div>
+                <span class="text-neutral-400 font-semibold block text-[11px] uppercase tracking-wider mb-0.5">Opis funkcjonalny</span>
+                <p class="leading-relaxed bg-carbon/50 p-2.5 rounded-lg border border-bordercol/40 text-neutral-400" x-text="item.description"></p>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- Źródło -->
+        <template x-if="item.source_url">
+          <div class="mt-4 pt-3 border-t border-bordercol/60 flex items-center justify-end">
+            <a :href="item.source_url" target="_blank" rel="noopener noreferrer" class="text-xs text-red-400 hover:text-red-300 font-medium inline-flex items-center gap-1">
+              Dokument źródłowy FIA &rarr;
+            </a>
+          </div>
+        </template>
+      </div>
+    </template>
+  </div>
+
+  <!-- Komunikat braku wyników -->
+  <div x-show="filteredUpgrades.length === 0" class="text-center py-16 bg-surface border border-bordercol rounded-xl mt-4">
+    <div class="text-3xl mb-2">🔍</div>
+    <div class="text-base font-bold text-white mb-1">Brak poprawek dla wybranych filtrów</div>
+    <p class="text-xs text-neutral-400">Spróbuj wybrać inne Grand Prix, zresetować filtry lub wyczyścić pole wyszukiwania.</p>
+  </div>
+</div>
+{% endblock %}

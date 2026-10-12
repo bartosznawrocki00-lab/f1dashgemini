@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pl" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}F1 Car Upgrades Tracker{% endblock %}</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Alpine.js CDN -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            f1red: '#E10600',
+            carbon: '#121214',
+            surface: '#1A1A1E',
+            bordercol: '#2C2C32',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-carbon text-neutral-100 min-h-screen flex flex-col font-sans antialiased selection:bg-f1red selection:text-white">
+  <!-- Nawigacja -->
+  <header class="border-b border-bordercol bg-surface/80 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="h-8 w-8 rounded-lg bg-f1red flex items-center justify-center font-black text-white italic tracking-tighter text-lg shadow-lg shadow-red-900/40">
+          F1
+        </div>
+        <div>
+          <h1 class="font-extrabold text-base tracking-wider text-white uppercase flex items-center gap-2">
+            Tech Tracker <span class="text-[10px] bg-red-950/80 text-red-400 font-semibold px-2 py-0.5 rounded border border-red-800">2026 SPEC</span>
+          </h1>
+          <p class="text-[11px] text-neutral-400">Oficjalne poprawki i modyfikacje aerodynamiczne</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-4 text-xs text-neutral-400">
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-neutral-900 border border-neutral-700">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          FIA Submissions
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Główna zawartość -->
+  <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Stopka -->
+  <footer class="border-t border-bordercol bg-surface/50 text-neutral-500 text-xs py-6 mt-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+      <p>Baza aktualizowana na podstawie dokumentów FIA <em>Car Presentation Submissions</em>.</p>
+      <p class="text-neutral-600">Projekt 100% Open-Source &middot; GitHub Pages</p>
+    </div>
+  </footer>
+</body>
+</html>
