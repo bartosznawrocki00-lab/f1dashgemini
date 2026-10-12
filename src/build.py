@@ -9,17 +9,13 @@ DATA_FILE = BASE_DIR / "data" / "upgrades.json"
 TEMPLATES_DIR = BASE_DIR / "templates"
 DIST_DIR = BASE_DIR / "dist"
 
-# Słownik najpopularniejszych pojęć technicznych FIA
 TRANSLATIONS = {
-    # Cele modyfikacji (Reasons)
     "performance - flow conditioning": "Wydajność – Ukierunkowanie strug",
     "performance - local load": "Wydajność – Lokalny docisk",
     "performance - drag reduction": "Wydajność – Redukcja oporu",
     "circuit specific - cooling": "Pod tor – Chłodzenie",
     "circuit specific - drag reduction": "Pod tor – Redukcja oporu",
     "reliability": "Niezawodność",
-    
-    # Komponenty aerodynamiczne
     "front wing": "Przednie skrzydło",
     "rear wing": "Tylne skrzydło",
     "beam wing": "Skrzydło belkowe",
@@ -38,24 +34,15 @@ TRANSLATIONS = {
     "nose": "Nos bolidu",
     "coke bottle": "Sekcja 'Coke bottle'",
     "halo": "System Halo",
-    "endplate": "Płytka brzegowa",
-    "flow conditioning": "Kierowanie przepływu powietrza",
-    "halo": "System Halo",
-    "endplate": "Płytka brzegowa",
-    "rear corner": "Tylny narożnik",
-    "front corner": "Przedni narożnik",
-    "coke bottle / engine cover": "Sekcja Coke Bottle / Pokrywa silnika",
-    "front wing flaps": "Klapy przedniego skrzydła"
+    "endplate": "Płytka brzegowa"
 }
 
 def translate_text(text: str) -> str:
     if not text:
         return ""
     translated = text
-    # Zamienia wystąpienia ignorując wielkość liter
     for eng, pl in TRANSLATIONS.items():
         translated = re.sub(re.escape(eng), pl, translated, flags=re.IGNORECASE)
-    # Prosta poprawka estetyczna (wielka litera na początku)
     return translated[0].upper() + translated[1:] if translated else ""
 
 def build():
@@ -68,7 +55,7 @@ def build():
         raw_upgrades = []
 
     upgrades = []
-    gp_dates = {} # Słownik do mapowania wyścigów na daty z PDF
+    gp_dates = {} 
 
     for u in raw_upgrades:
         item = u.copy()
@@ -76,9 +63,7 @@ def build():
         item["reason"] = translate_text(item["reason"])
         upgrades.append(item)
 
-        # Sprawdzanie i zapisywanie daty dla danego wyścigu
         gp_name = item["grand_prix"]
-        # Jeśli z jakiegoś powodu w bazie nie ma daty, dajemy fikcyjną wysoką wartość, by spadło na sam dół
         pdf_date = item.get("pdf_date", "99999999") 
         
         if gp_name not in gp_dates or pdf_date < gp_dates[gp_name]:
@@ -102,4 +87,6 @@ def build():
         f.write(html_out)
 
     print(f"✅ Sukces: Wygenerowano {out_file} (Łącznie wpisów: {len(upgrades)})")
+
+if __name__ == "__main__":
     build()
