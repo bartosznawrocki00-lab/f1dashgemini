@@ -38,7 +38,14 @@ TRANSLATIONS = {
     "nose": "Nos bolidu",
     "coke bottle": "Sekcja 'Coke bottle'",
     "halo": "System Halo",
-    "endplate": "Płytka brzegowa"
+    "endplate": "Płytka brzegowa",
+    "flow conditioning": "Kierowanie przepływu powietrza",
+    "halo": "System Halo",
+    "endplate": "Płytka brzegowa",
+    "rear corner": "Tylny narożnik",
+    "front corner": "Przedni narożnik",
+    "coke bottle / engine cover": "Sekcja Coke Bottle / Pokrywa silnika",
+    "front wing flaps": "Klapy przedniego skrzydła"
 }
 
 def translate_text(text: str) -> str:
