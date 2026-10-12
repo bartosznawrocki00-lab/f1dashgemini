@@ -67,16 +67,25 @@ def build():
     else:
         raw_upgrades = []
 
-    # Tworzenie przetłumaczonej kopii danych na potrzeby strony
     upgrades = []
+    gp_dates = {} # Słownik do mapowania wyścigów na daty z PDF
+
     for u in raw_upgrades:
         item = u.copy()
         item["component"] = translate_text(item["component"])
         item["reason"] = translate_text(item["reason"])
         upgrades.append(item)
 
-    # Unikalne, posortowane listy do filtrów
-    grand_prix_list = sorted({u["grand_prix"] for u in upgrades})
+        # Sprawdzanie i zapisywanie daty dla danego wyścigu
+        gp_name = item["grand_prix"]
+        # Jeśli z jakiegoś powodu w bazie nie ma daty, dajemy fikcyjną wysoką wartość, by spadło na sam dół
+        pdf_date = item.get("pdf_date", "99999999") 
+        
+        if gp_name not in gp_dates or pdf_date < gp_dates[gp_name]:
+            gp_dates[gp_name] = pdf_date
+
+    # Sortowanie Grand Prix rosnąco według cyfrowych dat pobranych z plików PDF
+    grand_prix_list = sorted(list(gp_dates.keys()), key=lambda x: gp_dates[x])
     teams_list = sorted({u["team"] for u in upgrades})
 
     env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)))
@@ -93,6 +102,4 @@ def build():
         f.write(html_out)
 
     print(f"✅ Sukces: Wygenerowano {out_file} (Łącznie wpisów: {len(upgrades)})")
-
-if __name__ == "__main__":
     build()
