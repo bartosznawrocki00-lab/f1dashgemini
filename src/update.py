@@ -88,15 +88,29 @@ def slug_to_gp_name(slug: str) -> str:
     return slug.replace("-", " ").title() + " Grand Prix"
 
 def clean_database(upgrades: list[dict]) -> list[dict]:
-    """Funkcja samonaprawiająca - ujednolica tylko błędy w nazwach, datę załatwia czytnik PDF."""
+    """Funkcja samonaprawiająca - ujednolica błędy w nazwach i narzuca idealną kolejność (nawet starym plikom)."""
+    
+    # Tworzymy dynamiczną kolejność na podstawie listy pobierania z GP_SLUGS
+    calendar_order = {}
+    for index, slug in enumerate(GP_SLUGS):
+        expected_name = slug_to_gp_name(slug)
+        calendar_order[expected_name] = f"2000{index:04d}"
+
     for item in upgrades:
         gp = item.get("grand_prix", "").strip()
         
-        # Unifikacja nazewnictwa dla starych i dziwnych plików FIA
+        # 1. Unifikacja chaosu nazewniczego
         if gp == "Grand Prix":
-            item["grand_prix"] = "Barcelona-Catalunya Grand Prix"
+            gp = "Barcelona-Catalunya Grand Prix"
         elif any(x in gp for x in ["Bahrain", "Sepang", "Malaysia"]):
-            item["grand_prix"] = "Bahrain Grand Prix"
+            gp = "Bahrain Grand Prix"
+            
+        item["grand_prix"] = gp
+        
+        # 2. Retroaktywna naprawa - wymuszamy datę sortowania z kalendarza GP_SLUGS
+        # Nadpisze to starą datę 99999999, która wczoraj utknęła w Twojej bazie danych
+        if gp in calendar_order:
+            item["pdf_date"] = calendar_order[gp]
             
     return upgrades
 
