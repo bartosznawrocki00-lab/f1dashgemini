@@ -10,6 +10,7 @@ import io
 import re
 import pdfplumber
 from pathlib import Path
+from datetime import datetime
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR / "src"))
@@ -35,15 +36,41 @@ def save_upgrades(data: list[dict]):
         json.dump(data, f, indent=2, ensure_ascii=False)
 
 def extract_pdf_date(pdf_bytes: bytes) -> str:
+    """Odczytuje datę wydania bezpośrednio z tekstu wydrukowanego na dokumencie."""
     try:
         with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
-            metadata = pdf.metadata
-            creation_date = metadata.get("CreationDate", "")
-            match = re.search(r"D:(\d{8})", creation_date)
+            first_page = pdf.pages[0].extract_text()
+            
+            # 1. Szukamy oficjalnej daty z nagłówka, np. "Date | 02 October 2026"
+            match = re.search(r"Date\s*\|?\s*(\d{1,2}\s+[a-zA-Z]+\s+\d{4})", first_page)
             if match:
-                return match.group(1)
+                date_str = match.group(1)
+                try:
+                    # Tłumaczy angielską datę na format sortowalny, np. 20261002
+                    date_obj = datetime.strptime(date_str, "%d %B %Y")
+                    return date_obj.strftime("%Y%m%d")
+                except ValueError:
+                    pass
+                    
+            # 2. Plan B: Szukamy daty z weekendu, np. "02-04 October 2026"
+            match_weekend = re.search(r"(\d{1,2})\s*-\s*\d{1,2}\s+([a-zA-Z]+\s+\d{4})", first_page)
+            if match_weekend:
+                date_str = f"{match_weekend.group(1)} {match_weekend.group(2)}"
+                try:
+                    date_obj = datetime.strptime(date_str, "%d %B %Y")
+                    return date_obj.strftime("%Y%m%d")
+                except ValueError:
+                    pass
+
+            # 3. Plan C (Awaryjny): Szukamy w ukrytych metadanych PDF-a
+            creation_date = pdf.metadata.get("CreationDate", "")
+            match_meta = re.search(r"D:(\d{8})", creation_date)
+            if match_meta:
+                return match_meta.group(1)
+                
     except Exception as e:
-        print(f"⚠️ Nie udało się odczytać daty z metadanych PDF: {e}")
+        print(f"⚠️ Nie udało się odczytać daty z PDF: {e}")
+        
     return "99999999"
 
 def slug_to_gp_name(slug: str) -> str:
@@ -61,15 +88,13 @@ def slug_to_gp_name(slug: str) -> str:
     return slug.replace("-", " ").title() + " Grand Prix"
 
 def clean_database(upgrades: list[dict]) -> list[dict]:
-    """Funkcja samonaprawiająca - czyści i unifikuje nazwy GP przed zapisem."""
+    """Funkcja samonaprawiająca - ujednolica tylko błędy w nazwach, datę załatwia czytnik PDF."""
     for item in upgrades:
         gp = item.get("grand_prix", "").strip()
         
-        # 1. Usuwanie 'ducha' z bazy (naprawa Katalonii)
+        # Unifikacja nazewnictwa dla starych i dziwnych plików FIA
         if gp == "Grand Prix":
             item["grand_prix"] = "Barcelona-Catalunya Grand Prix"
-            
-        # 2. Ujednolicanie chaosu nazewniczego zespołów z Malezji/Bahrajnu
         elif any(x in gp for x in ["Bahrain", "Sepang", "Malaysia"]):
             item["grand_prix"] = "Bahrain Grand Prix"
             
