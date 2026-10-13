@@ -171,3 +171,47 @@
                 <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
                       :class="item.reason.toLowerCase().includes('circuit') ? 'bg-amber-950/60 text-amber-300 border border-amber-900/50' : 'bg-blue-950/60 text-blue-300 border border-blue-900/50'"
                       x-text="item.reason"></span>
+              </div>
+
+              <!-- Różnice geometryczne i opis -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-neutral-300">
+                <template x-if="item.change_detail">
+                  <div>
+                    <span class="text-neutral-500 font-semibold block text-[10px] uppercase tracking-wider mb-1">Różnice geometryczne</span>
+                    <p class="leading-relaxed bg-black/30 p-2.5 rounded-lg border border-bordercol/30" x-text="item.change_detail"></p>
+                  </div>
+                </template>
+                <template x-if="item.description">
+                  <div>
+                    <span class="text-neutral-500 font-semibold block text-[10px] uppercase tracking-wider mb-1">Opis funkcjonalny</span>
+                    <p class="leading-relaxed bg-black/30 p-2.5 rounded-lg border border-bordercol/30 text-neutral-400" x-text="item.description"></p>
+                  </div>
+                </template>
+              </div>
+            </div>
+
+          </template>
+        </div>
+
+        <!-- Link do dokumentu źródłowego w stopce -->
+        <template x-if="group.source_url">
+          <div class="bg-carbon/40 p-3 border-t border-bordercol text-right">
+            <a :href="group.source_url" target="_blank" rel="noopener noreferrer" class="text-[11px] uppercase tracking-wider text-neutral-500 hover:text-white font-bold transition flex items-center justify-end gap-1.5">
+              Dokument źródłowy FIA 
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+            </a>
+          </div>
+        </template>
+        
+      </div>
+    </template>
+  </div>
+
+  <!-- Komunikat braku wyników -->
+  <div x-show="filteredUpgrades.length === 0" class="text-center py-16 bg-surface border border-bordercol rounded-xl mt-4">
+    <div class="text-3xl mb-2">🔍</div>
+    <div class="text-base font-bold text-white mb-1">Brak poprawek dla wybranych filtrów</div>
+    <p class="text-xs text-neutral-400">Spróbuj wybrać inne Grand Prix, zresetować filtry lub wyczyścić pole wyszukiwania.</p>
+  </div>
+</div>
+{% endblock %}
