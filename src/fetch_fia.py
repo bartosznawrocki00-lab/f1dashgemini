@@ -45,6 +45,23 @@ def download_pdf(url: str) -> bytes | None:
         resp = requests.get(url, headers=HEADERS, timeout=45)
         if resp.status_code == 200 and resp.content.startswith(b"%PDF"):
             return resp.content
+            
+        # --- AUTOMATYCZNY FALLBACK DLA BAHRAJNU W MALEZJI ---
+        if "bahrain_grand_prix" in url and resp.status_code == 404:
+            print("⚠️ Standardowy link dla Bahrajnu nie działa. Szukam wersji 'in Malaysia'...")
+            # Próba 1: z pojedynczą spacją (pojedynczym podkreślnikiem)
+            alt_url_1 = url.replace("bahrain_grand_prix", "bahrain_grand_prix_in_malaysia")
+            # Próba 2: odzwierciedlająca podwójną spację z pliku PDF (podwójny podkreślnik)
+            alt_url_2 = url.replace("bahrain_grand_prix", "bahrain_grand_prix_in_malaysia__")
+            
+            for alt_url in [alt_url_1, alt_url_2]:
+                time.sleep(1)
+                alt_resp = requests.get(alt_url, headers=HEADERS, timeout=45)
+                if alt_resp.status_code == 200 and alt_resp.content.startswith(b"%PDF"):
+                    print(f"✅ Sukces! Pobrano z alternatywnego linku: {alt_url}")
+                    return alt_resp.content
+        # -----------------------------------------------------
+        
     except requests.RequestException as e:
         print(f"Nie udało się pobrać {url}: {e}")
     return None
