@@ -48,6 +48,23 @@ def extract_pdf_date(pdf_bytes: bytes) -> str:
         print(f"⚠️ Nie udało się odczytać daty z metadanych PDF: {e}")
     return "99999999" # Wysoka wartość, jeśli data nie istnieje (spadnie na koniec listy)
 
+def slug_to_gp_name(slug: str) -> str:
+    """Zmienia fragment adresu URL na oficjalną nazwę Grand Prix."""
+    special_cases = {
+        "barcelona-catalunya": "Barcelona-Catalunya Grand Prix",
+        "emilia-romagna": "Emilia Romagna Grand Prix",
+        "sao-paulo": "São Paulo Grand Prix",
+        "mexico-city": "Mexico City Grand Prix",
+        "las-vegas": "Las Vegas Grand Prix",
+        "abu-dhabi": "Abu Dhabi Grand Prix",
+        "saudi-arabian": "Saudi Arabian Grand Prix"
+    }
+    if slug in special_cases:
+        return special_cases[slug]
+    
+    # Domyślny format: np. "australian" -> "Australian Grand Prix"
+    return slug.replace("-", " ").title() + " Grand Prix"
+
 def run_update(manual_pdf: str = None, year: int = 2026):
     existing = load_upgrades()
     existing_ids = {u["id"] for u in existing}
@@ -76,6 +93,10 @@ def run_update(manual_pdf: str = None, year: int = 2026):
                 parsed = parse_car_presentation_pdf(content, source_url=url)
                 for item in parsed:
                     item["pdf_date"] = pdf_date
+                    
+                    # Twarde nadpisanie nazwy na podstawie niezawodnego adresu URL:
+                    item["grand_prix"] = slug_to_gp_name(slug)
+                    
                     if item["id"] not in existing_ids:
                         existing.append(item)
                         existing_ids.add(item["id"])
