@@ -35,21 +35,18 @@ def save_upgrades(data: list[dict]):
         json.dump(data, f, indent=2, ensure_ascii=False)
 
 def extract_pdf_date(pdf_bytes: bytes) -> str:
-    """Odczytuje wewnętrzną datę utworzenia z metadanych pliku PDF (zwraca format YYYYMMDD)."""
     try:
         with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
             metadata = pdf.metadata
             creation_date = metadata.get("CreationDate", "")
-            # Format daty w PDF to zwykle D:YYYYMMDDHHmmSS... (np. D:20260315143000Z)
             match = re.search(r"D:(\d{8})", creation_date)
             if match:
                 return match.group(1)
     except Exception as e:
         print(f"⚠️ Nie udało się odczytać daty z metadanych PDF: {e}")
-    return "99999999" # Wysoka wartość, jeśli data nie istnieje (spadnie na koniec listy)
+    return "99999999"
 
 def slug_to_gp_name(slug: str) -> str:
-    """Zmienia fragment adresu URL na oficjalną nazwę Grand Prix."""
     special_cases = {
         "barcelona-catalunya": "Barcelona-Catalunya Grand Prix",
         "emilia-romagna": "Emilia Romagna Grand Prix",
@@ -61,9 +58,22 @@ def slug_to_gp_name(slug: str) -> str:
     }
     if slug in special_cases:
         return special_cases[slug]
-    
-    # Domyślny format: np. "australian" -> "Australian Grand Prix"
     return slug.replace("-", " ").title() + " Grand Prix"
+
+def clean_database(upgrades: list[dict]) -> list[dict]:
+    """Funkcja samonaprawiająca - czyści i unifikuje nazwy GP przed zapisem."""
+    for item in upgrades:
+        gp = item.get("grand_prix", "").strip()
+        
+        # 1. Usuwanie 'ducha' z bazy (naprawa Katalonii)
+        if gp == "Grand Prix":
+            item["grand_prix"] = "Barcelona-Catalunya Grand Prix"
+            
+        # 2. Ujednolicanie chaosu nazewniczego zespołów z Malezji/Bahrajnu
+        elif any(x in gp for x in ["Bahrain", "Sepang", "Malaysia"]):
+            item["grand_prix"] = "Bahrain Grand Prix"
+            
+    return upgrades
 
 def run_update(manual_pdf: str = None, year: int = 2026):
     existing = load_upgrades()
@@ -93,8 +103,6 @@ def run_update(manual_pdf: str = None, year: int = 2026):
                 parsed = parse_car_presentation_pdf(content, source_url=url)
                 for item in parsed:
                     item["pdf_date"] = pdf_date
-                    
-                    # Twarde nadpisanie nazwy na podstawie niezawodnego adresu URL:
                     item["grand_prix"] = slug_to_gp_name(slug)
                     
                     if item["id"] not in existing_ids:
@@ -102,6 +110,9 @@ def run_update(manual_pdf: str = None, year: int = 2026):
                         existing_ids.add(item["id"])
                         new_count += 1
 
+    # PRZEPUSZCZAMY DANE PRZEZ FILTR NAPRAWCZY
+    existing = clean_database(existing)
+    
     print(f"Dodano {new_count} nowych pozycji do bazy.")
     save_upgrades(existing)
     
