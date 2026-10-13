@@ -63,7 +63,7 @@
     if (team.includes("mercedes")) return "border-l-[6px] border-teal-400";
     if (team.includes("mclaren")) return "border-l-[6px] border-orange-500";
     if (team.includes("aston martin")) return "border-l-[6px] border-emerald-700";
-    if (team.includes("alpine")) return "border-l-[6px] border-pink-500"; // lub niebieski, zależy od ich obecnego malowania
+    if (team.includes("alpine")) return "border-l-[6px] border-pink-500"; 
     if (team.includes("williams")) return "border-l-[6px] border-blue-400";
     if (team.includes("vcarb") || team.includes("rb")) return "border-l-[6px] border-blue-700";
     if (team.includes("sauber") || team.includes("stake")) return "border-l-[6px] border-green-500";
@@ -110,4 +110,64 @@
       <!-- Filtr Zespół -->
       <div>
         <label class="block text-xs uppercase font-bold text-neutral-400 mb-2">Konstruktor</label>
-        <select x-model="selected
+        <select x-model="selectedTeam" class="w-full bg-carbon border border-bordercol rounded-lg px-3 py-2 text-sm text-neutral-200 focus:border-f1red outline-none">
+          <option value="Wszystkie">Wszystkie zespoły</option>
+          {% for team in teams_list %}
+          <option value="{{ team }}">{{ team }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Filtr Typ zmiany -->
+      <div>
+        <label class="block text-xs uppercase font-bold text-neutral-400 mb-2">Cel modyfikacji</label>
+        <select x-model="selectedReasonType" class="w-full bg-carbon border border-bordercol rounded-lg px-3 py-2 text-sm text-neutral-200 focus:border-f1red outline-none">
+          <option value="Wszystkie">Wszystkie cele</option>
+          <option value="Performance">Tylko Performance (Docisk)</option>
+          <option value="Circuit Specific">Tylko Circuit Specific (Dopasowanie)</option>
+        </select>
+      </div>
+
+      <!-- Szukajka tekstowa -->
+      <div>
+        <label class="block text-xs uppercase font-bold text-neutral-400 mb-2">Szukaj w opisie</label>
+        <input type="text" x-model="searchQuery" placeholder="np. Floor, Front wing, DRS..." class="w-full bg-carbon border border-bordercol rounded-lg px-3 py-2 text-sm text-neutral-200 placeholder-neutral-600 focus:border-f1red outline-none">
+      </div>
+    </div>
+  </div>
+
+  <!-- Siatka ZGRUPOWANYCH kart zespołów -->
+  <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+    <template x-for="group in groupedUpgrades" :key="group.team + group.grand_prix">
+      
+      <!-- Karta Zespołu (dynamiczny kolor ramki z lewej strony) -->
+      <div class="bg-surface border border-bordercol rounded-xl overflow-hidden shadow-md flex flex-col" :class="getTeamColor(group.team)">
+        
+        <!-- Nagłówek Zespołu -->
+        <div class="bg-carbon/60 p-4 border-b border-bordercol flex justify-between items-center">
+          <div>
+            <h2 class="text-xl font-black text-white uppercase tracking-wider" x-text="group.team"></h2>
+            <div class="text-sm text-neutral-400 mt-1 flex items-center gap-1.5">
+              🏁 <span x-text="group.grand_prix"></span>
+            </div>
+          </div>
+          <!-- Podsumowanie liczby uaktualnień na tej karcie -->
+          <div class="text-xs font-bold text-neutral-500 bg-neutral-900 px-3 py-1 rounded-full border border-neutral-800">
+            Części: <span class="text-neutral-300" x-text="group.items.length"></span>
+          </div>
+        </div>
+
+        <!-- Lista uaktualnień zespołu -->
+        <div class="p-5 flex-grow space-y-6">
+          <template x-for="(item, index) in group.items" :key="item.id">
+            
+            <div class="relative">
+              <!-- Cienka linia oddzielająca części (pomijana przy pierwszej) -->
+              <div x-show="index > 0" class="absolute -top-3 left-0 w-full h-px bg-bordercol/50"></div>
+              
+              <!-- Nazwa elementu -->
+              <div class="flex items-center gap-3 mb-2">
+                <h3 class="text-base font-bold text-neutral-100" x-text="item.component"></h3>
+                <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
+                      :class="item.reason.toLowerCase().includes('circuit') ? 'bg-amber-950/60 text-amber-300 border border-amber-900/50' : 'bg-blue-950/60 text-blue-300 border border-blue-900/50'"
+                      x-text="item.reason"></span>
