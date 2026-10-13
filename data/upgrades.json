@@ -2294,7 +2294,7 @@
   {
     "id": "d66f9b2aa7a907ab",
     "year": 2026,
-    "grand_prix": "Grand Prix",
+    "grand_prix": "Barcelona-Catalunya Grand Prix",
     "team": "McLaren",
     "component": "Front Wing",
     "reason": "Performance - Flow Conditioning",
@@ -2306,7 +2306,7 @@
   {
     "id": "85cbd85d5e21c081",
     "year": 2026,
-    "grand_prix": "Grand Prix",
+    "grand_prix": "Barcelona-Catalunya Grand Prix",
     "team": "Mercedes",
     "component": "Rear Wing",
     "reason": "Performance - Local Load",
@@ -2318,7 +2318,7 @@
   {
     "id": "aca69f1edcd2a227",
     "year": 2026,
-    "grand_prix": "Grand Prix",
+    "grand_prix": "Barcelona-Catalunya Grand Prix",
     "team": "Red Bull",
     "component": "Front Wing",
     "reason": "Local load and flow conditioning.",
@@ -2330,7 +2330,7 @@
   {
     "id": "913241f126be3840",
     "year": 2026,
-    "grand_prix": "Grand Prix",
+    "grand_prix": "Barcelona-Catalunya Grand Prix",
     "team": "Red Bull",
     "component": "Front wing",
     "reason": "Balance range",
@@ -2342,7 +2342,7 @@
   {
     "id": "935ead25415f1937",
     "year": 2026,
-    "grand_prix": "Grand Prix",
+    "grand_prix": "Barcelona-Catalunya Grand Prix",
     "team": "Ferrari",
     "component": "Front Wing",
     "reason": "Performance - Local Load",
@@ -2354,7 +2354,7 @@
   {
     "id": "9b3c9acafd7680ea",
     "year": 2026,
-    "grand_prix": "Grand Prix",
+    "grand_prix": "Barcelona-Catalunya Grand Prix",
     "team": "Ferrari",
     "component": "Floor Body",
     "reason": "Performance - Local Load",
@@ -2366,7 +2366,7 @@
   {
     "id": "e725aebb4575f5fa",
     "year": 2026,
-    "grand_prix": "Grand Prix",
+    "grand_prix": "Barcelona-Catalunya Grand Prix",
     "team": "Ferrari",
     "component": "Sidepod/Coke",
     "reason": "Performance - Flow Conditioning",
@@ -2378,7 +2378,7 @@
   {
     "id": "7f88113de7e93b45",
     "year": 2026,
-    "grand_prix": "Grand Prix",
+    "grand_prix": "Barcelona-Catalunya Grand Prix",
     "team": "Williams",
     "component": "Rear Wing",
     "reason": "Performance – Local Load",
@@ -2390,7 +2390,7 @@
   {
     "id": "cda68c57f5949f4e",
     "year": 2026,
-    "grand_prix": "Grand Prix",
+    "grand_prix": "Barcelona-Catalunya Grand Prix",
     "team": "Racing Bulls",
     "component": "Front Wing",
     "reason": "Circuit specific - Balance Range",
@@ -2402,7 +2402,7 @@
   {
     "id": "13b541dbd61bc79b",
     "year": 2026,
-    "grand_prix": "Grand Prix",
+    "grand_prix": "Barcelona-Catalunya Grand Prix",
     "team": "Haas",
     "component": "Rear Impact Structure",
     "reason": "Rear Impact",
@@ -2414,7 +2414,7 @@
   {
     "id": "e00d1db611dbf807",
     "year": 2026,
-    "grand_prix": "Grand Prix",
+    "grand_prix": "Barcelona-Catalunya Grand Prix",
     "team": "Haas",
     "component": "Structure",
     "reason": "Local Load",
@@ -2426,7 +2426,7 @@
   {
     "id": "7cb9468fcb65645c",
     "year": 2026,
-    "grand_prix": "Grand Prix",
+    "grand_prix": "Barcelona-Catalunya Grand Prix",
     "team": "Cadillac",
     "component": "Cooling Louvres",
     "reason": "Performance – Cooling Range",
@@ -2438,7 +2438,7 @@
   {
     "id": "3da6ad3c8751275b",
     "year": 2026,
-    "grand_prix": "Grand Prix",
+    "grand_prix": "Barcelona-Catalunya Grand Prix",
     "team": "Cadillac",
     "component": "Rear Wing",
     "reason": "Performance – Drag Reduction",
