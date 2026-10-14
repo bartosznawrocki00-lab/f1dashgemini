@@ -253,7 +253,7 @@
 
 <div x-data="f1Dashboard()">
 
-  <!-- MENU ZAKŁADEK (TABS) - DODANO TRZECIĄ ZAKŁADKĘ -->
+  <!-- MENU ZAKŁADEK (TABS) -->
   <div class="flex space-x-6 mb-8 border-b border-bordercol overflow-x-auto whitespace-nowrap">
     <button @click="activeTab = 'home'" 
             class="pb-3 text-sm font-black uppercase tracking-widest transition-all duration-300 relative outline-none"
@@ -343,11 +343,13 @@
         <table class="w-full text-left border-collapse">
           <thead>
             <tr class="border-b border-bordercol text-[10px] uppercase tracking-widest text-neutral-500 font-bold">
-              <th class="p-3">Poz</th>
-              <th class="p-3">Nr</th>
+              <th class="p-3 w-8">Poz</th>
               <th class="p-3">Kierowca</th>
               <th class="p-3">Strata</th>
-              <th class="p-3">Czas / Okr.</th>
+              <th class="p-3 text-center text-neutral-600">S1</th>
+              <th class="p-3 text-center text-neutral-600">S2</th>
+              <th class="p-3 text-center text-neutral-600">S3</th>
+              <th class="p-3">Czas okr.</th>
               <th class="p-3 text-center">Opona</th>
               <th class="p-3 text-right">Status</th>
             </tr>
@@ -356,14 +358,18 @@
             <template x-for="driver in mockLiveData" :key="driver.driver">
               <tr class="border-b border-bordercol/30 hover:bg-carbon/50 transition">
                 <td class="p-3 text-neutral-300 font-black" x-text="driver.pos"></td>
-                <td class="p-3 text-neutral-500" x-text="driver.number"></td>
                 <td class="p-3 font-bold" :class="getTeamColorCSS(driver.team).replace('border-l-[6px] border-', 'text-')">
                   <span class="px-2 border-l-4" :class="getTeamColorCSS(driver.team).replace('border-l-[6px]', '')" x-text="driver.driver"></span>
                 </td>
                 <td class="p-3 text-neutral-300" x-text="driver.gap"></td>
+                
+                <!-- NOWE KOLUMNY SEKTORÓW -->
+                <td class="p-3 text-center text-neutral-400 text-xs font-semibold" x-text="driver.s1"></td>
+                <td class="p-3 text-center text-neutral-400 text-xs font-semibold" x-text="driver.s2"></td>
+                <td class="p-3 text-center text-neutral-400 text-xs font-semibold" x-text="driver.s3"></td>
+                
                 <td class="p-3 font-bold text-white" x-text="driver.lap"></td>
                 <td class="p-3 text-center">
-                  <!-- Kolorowe kółko opony z literą -->
                   <div class="inline-flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-black border border-neutral-800 shadow-sm"
                        :class="driver.tireColor" x-text="driver.tire.charAt(0)">
                   </div>
