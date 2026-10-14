@@ -33,7 +33,6 @@ def load_fastf1_data():
 
 threading.Thread(target=load_fastf1_data).start()
 
-# Funkcja pomocnicza: ładne formatowanie straty do lidera
 def format_timedelta(td):
     if pd.isnull(td): return ""
     total_seconds = td.total_seconds()
@@ -44,14 +43,21 @@ def format_timedelta(td):
     if m > 0: return f"+{m}:{s:02d}.{ms:03d}"
     else: return f"+{s}.{ms:03d}"
 
-# Funkcja pomocnicza: czas pojedynczego okrążenia
 def format_laptime(td):
     if pd.isnull(td): return "Brak"
     total_seconds = td.total_seconds()
     m = int(total_seconds // 60)
     s = int(total_seconds % 60)
     ms = int((total_seconds - (m * 60) - s) * 1000)
-    return f"{m}:{s:02d}.{ms:03d}"
+    if m > 0: return f"{m}:{s:02d}.{ms:03d}"
+    else: return f"{s}.{ms:03d}"
+
+# Sektory rzadko przekraczają minutę, więc formatujemy do samych sekund
+def format_sector(td):
+    if pd.isnull(td): return ""
+    total_seconds = td.total_seconds()
+    if total_seconds < 0: return ""
+    return f"{total_seconds:.3f}"
 
 @app.route('/api/live')
 def live_data():
@@ -65,15 +71,10 @@ def live_data():
     if req_lap < 1: req_lap = 1
         
     laps_up_to_now = race_laps[race_laps['LapNumber'] <= req_lap]
-    
-    # Krok 1: Znajdź OSTATNIE zaliczone okrążenie dla każdego kierowcy w tym momencie wyścigu
     idx = laps_up_to_now.groupby('Driver')['LapNumber'].idxmax()
     latest_laps = laps_up_to_now.loc[idx]
-    
-    # Krok 2: Prawdziwe sortowanie F1 (najpierw liczba okrążeń, potem łączny czas)
     latest_laps = latest_laps.sort_values(by=['LapNumber', 'Time'], ascending=[False, True])
     
-    # Krok 3: Namierzamy lidera, aby od niego obliczać różnice!
     leader = latest_laps.iloc[0]
     leader_lap_num = leader['LapNumber']
     leader_time = leader['Time']
@@ -94,41 +95,41 @@ def live_data():
         
         lap_str = format_laptime(row['LapTime'])
         
-        # Sprawdzamy maksymalne kółko kierowcy w CAŁYM wyścigu, żeby wykryć wycofanie (DNF)
-        driver_max_lap = race_laps[race_laps['Driver'] == driver]['LapNumber'].max()
+        s1 = format_sector(row['Sector1Time'])
+        s2 = format_sector(row['Sector2Time'])
+        s3 = format_sector(row['Sector3Time'])
         
+        driver_max_lap = race_laps[race_laps['Driver'] == driver]['LapNumber'].max()
         status = "track"
         gap = ""
         
-        # Logika zjazdów do boksu
         if not pd.isnull(row['PitInTime']):
             status = "pit"
             
-        # Logika strat i wycofań (DNF)
         if pos == 1:
             gap = "Leader"
         else:
             if driver_max_lap == row['LapNumber'] and req_lap > row['LapNumber'] + 1:
-                # Jeśli wyścig odjechał, a on został w miejscu - DNF
                 gap = "DNF"
                 status = "out"
                 lap_str = "OUT"
+                s1 = s2 = s3 = ""
             elif row['LapNumber'] < leader_lap_num:
-                # Zdublowany
                 laps_behind = int(leader_lap_num - row['LapNumber'])
                 gap = f"+{laps_behind} LAP"
             else:
-                # Zwykła strata na torze (sekundy)
                 time_diff = row['Time'] - leader_time
                 gap = format_timedelta(time_diff)
 
         formatted_data.append({
             "pos": pos,
-            "number": str(row['DriverNumber']),
             "driver": driver,
             "team": str(row['Team']),
             "gap": gap, 
             "lap": lap_str,
+            "s1": s1,
+            "s2": s2,
+            "s3": s3,
             "tire": compound if compound != 'nan' else "?",
             "tireColor": tire_color,
             "status": status
