@@ -1,6 +1,6 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
-import random
+import requests
 import os
 
 app = Flask(__name__)
@@ -8,22 +8,49 @@ CORS(app)
 
 @app.route('/api/live')
 def live_data():
-    ms_ver = random.randint(100, 999)
-    ms_nor = random.randint(100, 999)
-    
-    data = [
-        {"pos": 1, "number": 1, "driver": "VER", "team": "Red Bull Racing", "gap": "Leader", "lap": f"1:30.{ms_ver}", "tire": "Soft", "tireColor": "bg-red-600 text-white", "status": "track"},
-        {"pos": 2, "number": 4, "driver": "NOR", "team": "McLaren", "gap": "+0.215", "lap": f"1:30.{ms_nor}", "tire": "Medium", "tireColor": "bg-yellow-400 text-black", "status": "track"},
-        {"pos": 3, "number": 16, "driver": "LEC", "team": "Ferrari", "gap": "+0.512", "lap": f"1:30.{random.randint(100, 999)}", "tire": "Soft", "tireColor": "bg-red-600 text-white", "status": "track"},
-        {"pos": 4, "number": 44, "driver": "HAM", "team": "Mercedes", "gap": "+0.840", "lap": f"1:31.{random.randint(100, 999)}", "tire": "Hard", "tireColor": "bg-white text-black", "status": "track"},
-        {"pos": 5, "number": 81, "driver": "PIA", "team": "McLaren", "gap": "+1.102", "lap": "IN PIT", "tire": "Medium", "tireColor": "bg-yellow-400 text-black", "status": "pit"},
-        {"pos": 6, "number": 14, "driver": "ALO", "team": "Aston Martin", "gap": "+1.450", "lap": f"1:31.{random.randint(100, 999)}", "tire": "Soft", "tireColor": "bg-red-600 text-white", "status": "track"},
-        {"pos": 7, "number": 55, "driver": "SAI", "team": "Ferrari", "gap": "+1.600", "lap": f"1:31.{random.randint(100, 999)}", "tire": "Hard", "tireColor": "bg-white text-black", "status": "track"},
-        {"pos": 8, "number": 63, "driver": "RUS", "team": "Mercedes", "gap": "+1.950", "lap": f"1:32.{random.randint(100, 999)}", "tire": "Inters", "tireColor": "bg-green-500 text-white", "status": "track"}
-    ]
-    return jsonify(data)
+    try:
+        # 1. Pobieramy w ułamku sekundy prawdziwe dane z ostatniego wyścigu F1
+        url = "https://api.jolpi.ca/ergast/f1/current/last/results.json"
+        response = requests.get(url, timeout=5)
+        raw_data = response.json()
+        
+        # 2. Wyciągamy mięso, czyli samą tabelę wyników
+        results = raw_data['MRData']['RaceTable']['Races'][0]['Results']
+        
+        formatted_data = []
+        # 3. Analizujemy pierwszą dziesiątkę (możesz usunąć [:10], żeby pobrać wszystkich)
+        for item in results[:10]: 
+            # Logika straty do lidera (Gap)
+            status = item['status']
+            gap = item.get('Time', {}).get('time', status)
+            if item['position'] == "1":
+                gap = "Leader"
+                
+            # Historyczne API nie przechowuje niestety opon, 
+            # więc na czas testu symulujemy, że parzyści mają Soft, a nieparzyści Medium
+            is_even = int(item['position']) % 2 == 0
+            
+            # 4. Tłumaczymy dane na format JSON dla Twojego Alpine.js
+            formatted_data.append({
+                "pos": item['position'],
+                "number": item['number'],
+                "driver": item['Driver'].get('code', item['Driver']['familyName'][:3].upper()),
+                "team": item['Constructor']['name'],
+                "gap": gap,
+                "lap": item.get('FastestLap', {}).get('Time', {}).get('time', 'Brak czasu'),
+                "tire": "Soft" if is_even else "Medium",
+                "tireColor": "bg-red-600 text-white" if is_even else "bg-yellow-400 text-black",
+                "status": "pit" if status != "Finished" and "+1" not in status else "track"
+            })
+            
+        # Zwracamy czystą tablicę do Twojej strony
+        return jsonify(formatted_data)
+        
+    except Exception as e:
+        print("Błąd pobierania z API:", e)
+        # W razie awarii API, wysyłamy pustą listę żeby nie zepsuć strony
+        return jsonify([])
 
 if __name__ == '__main__':
-    print("🚀 Serwer Live Timingu F1 uruchomiony na 0.0.0.0!")
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
