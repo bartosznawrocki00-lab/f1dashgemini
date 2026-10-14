@@ -5,13 +5,14 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-  // Globalne ustawienia dla wszystkich wykresów Chart.js na stronie
   Chart.defaults.color = "#a3a3a3";
   Chart.defaults.font.family = "'Inter', sans-serif";
 
   function f1Dashboard() {
     return {
-      activeTab: 'home',
+      // Dodana domyślna zakładka 'live', żebyś od razu po odświeżeniu widział efekt!
+      // (Później możemy zmienić z powrotem na 'home')
+      activeTab: 'live',
 
       selectedGp: "Wszystkie",
       selectedTeam: "Wszystkie",
@@ -19,52 +20,51 @@
       searchQuery: "",
       
       upgrades: {{ upgrades_json | safe }},
-
-      // Zmienne do kontroli wysuwanego wykresu osi czasu
       showChart: false,
-
-      // Zmienne dla Radaru Filozofii
       radarTeamA: '',
       radarTeamB: '',
 
-      // Inicjalizacja uruchamiana automatycznie przez Alpine.js
+      // --- MOCK DATA: TYMCZASOWE DANE DO LIVE TIMINGU ---
+      // W Etapie 2 te dane będą pobierane z Twojego serwera FastF1
+      mockLiveData: [
+        { pos: 1, number: 1, driver: "VER", team: "Red Bull Racing", gap: "Leader", lap: "1:30.214", tire: "Soft", tireColor: "bg-red-600 text-white", status: "track" },
+        { pos: 2, number: 4, driver: "NOR", team: "McLaren", gap: "+0.215", lap: "1:30.429", tire: "Medium", tireColor: "bg-yellow-400 text-black", status: "track" },
+        { pos: 3, number: 16, driver: "LEC", team: "Ferrari", gap: "+0.512", lap: "1:30.726", tire: "Soft", tireColor: "bg-red-600 text-white", status: "track" },
+        { pos: 4, number: 44, driver: "HAM", team: "Mercedes", gap: "+0.840", lap: "1:31.054", tire: "Hard", tireColor: "bg-white text-black", status: "track" },
+        { pos: 5, number: 81, driver: "PIA", team: "McLaren", gap: "+1.102", lap: "1:31.316", tire: "Medium", tireColor: "bg-yellow-400 text-black", status: "pit" },
+        { pos: 6, number: 14, driver: "ALO", team: "Aston Martin", gap: "+1.450", lap: "1:31.664", tire: "Soft", tireColor: "bg-red-600 text-white", status: "track" },
+        { pos: 7, number: 55, driver: "SAI", team: "Ferrari", gap: "+1.600", lap: "1:31.814", tire: "Hard", tireColor: "bg-white text-black", status: "track" },
+        { pos: 8, number: 63, driver: "RUS", team: "Mercedes", gap: "+1.950", lap: "1:32.164", tire: "Inters", tireColor: "bg-green-500 text-white", status: "track" }
+      ],
+
       init() {
         setTimeout(() => {
           this.initRadarChart();
         }, 100);
       },
 
-      // --- LOGIKA KATEGORYZACJI CZĘŚCI DO RADARU ---
+      // ... (tutaj znajdują się Twoje dotychczasowe funkcje radaru i wykresu osi czasu) ...
       getComponentCategory(compRaw) {
         const c = compRaw.toLowerCase();
-        if (c.includes('wing')) return 'Skrzydła';
-        if (c.includes('floor') || c.includes('diffuser')) return 'Podłoga';
-        if (c.includes('suspension') || c.includes('track rod')) return 'Zawieszenie';
-        if (c.includes('sidepod') || c.includes('cover') || c.includes('coke') || c.includes('bodywork')) return 'Nadwozie / Sidepody';
-        if (c.includes('cooling') || c.includes('louvres')) return 'Chłodzenie';
+        if (c.includes('wing') || c.includes('flap') || c.includes('cascade') || c.includes('rwe') || c.includes('fwe') || c.includes('gurney') || c.includes('endplate') || c.includes('pillar') || c.includes('pylon')) return 'Skrzydła';
+        if (c.includes('floor') || c.includes('diffuser') || c.includes('edge') || c.includes('fence') || c.includes('strakes') || c.includes('bib') || c.includes('skid') || c.includes('tray')) return 'Podłoga';
+        if (c.includes('suspension') || c.includes('track rod') || c.includes('wishbone') || c.includes('pullrod') || c.includes('pushrod') || c.includes('brake') || c.includes('drum') || c.includes('duct') || c.includes('fairing') || c.includes('upright') || c.includes('corner')) return 'Zawieszenie i Hamulce';
+        if (c.includes('sidepod') || c.includes('cover') || c.includes('coke') || c.includes('bodywork') || c.includes('engine') || c.includes('cowl') || c.includes('halo') || c.includes('mirror') || c.includes('nose') || c.includes('chassis') || c.includes('cockpit') || c.includes('headrest')) return 'Nadwozie / Sidepody';
+        if (c.includes('cooling') || c.includes('louvre') || c.includes('louver') || c.includes('gill') || c.includes('vent')) return 'Chłodzenie';
         return 'Inne';
       },
 
-      // --- INICJALIZACJA I UPDATE WYKRESU RADAROWEGO ---
       initRadarChart() {
         const canvas = document.getElementById("radarChart");
         if (!canvas) return;
-
-        // Zabezpieczenie przed podwójnym renderowaniem
-        if (Chart.getChart("radarChart")) {
-          Chart.getChart("radarChart").destroy();
-        }
-
+        if (Chart.getChart("radarChart")) Chart.getChart("radarChart").destroy();
         const ctx = canvas.getContext("2d");
-        const labels = ['Skrzydła', 'Podłoga', 'Zawieszenie', 'Nadwozie / Sidepody', 'Chłodzenie', 'Inne'];
-
-        // Ustawienie domyślnych zespołów (np. dwóch pierwszych w bazie)
+        const labels = ['Skrzydła', 'Podłoga', 'Zawieszenie i Hamulce', 'Nadwozie / Sidepody', 'Chłodzenie', 'Inne'];
         const allTeams = Array.from(new Set(this.upgrades.map(u => u.team))).sort();
         if (allTeams.length >= 2) {
           if (!this.radarTeamA) this.radarTeamA = allTeams[allTeams.findIndex(t => t.includes('Ferrari'))] || allTeams[0];
           if (!this.radarTeamB) this.radarTeamB = allTeams[allTeams.findIndex(t => t.includes('McLaren') || t.includes('Red Bull'))] || allTeams[1];
         }
-
         const getTeamData = (teamName) => {
           const data = [0, 0, 0, 0, 0, 0];
           if (!teamName) return data;
@@ -75,47 +75,19 @@
           });
           return data;
         };
-
         new Chart(ctx, {
           type: 'radar',
           data: {
             labels: labels,
             datasets: [
-              {
-                label: this.radarTeamA,
-                data: getTeamData(this.radarTeamA),
-                backgroundColor: this.getTeamColorHex(this.radarTeamA) + '50', // 50 to przezroczystość w formacie HEX
-                borderColor: this.getTeamColorHex(this.radarTeamA),
-                pointBackgroundColor: this.getTeamColorHex(this.radarTeamA),
-                pointBorderColor: '#1a1a1a',
-                borderWidth: 2
-              },
-              {
-                label: this.radarTeamB,
-                data: getTeamData(this.radarTeamB),
-                backgroundColor: this.getTeamColorHex(this.radarTeamB) + '50',
-                borderColor: this.getTeamColorHex(this.radarTeamB),
-                pointBackgroundColor: this.getTeamColorHex(this.radarTeamB),
-                pointBorderColor: '#1a1a1a',
-                borderWidth: 2
-              }
+              { label: this.radarTeamA, data: getTeamData(this.radarTeamA), backgroundColor: this.getTeamColorHex(this.radarTeamA) + '50', borderColor: this.getTeamColorHex(this.radarTeamA), pointBackgroundColor: this.getTeamColorHex(this.radarTeamA), pointBorderColor: '#1a1a1a', borderWidth: 2 },
+              { label: this.radarTeamB, data: getTeamData(this.radarTeamB), backgroundColor: this.getTeamColorHex(this.radarTeamB) + '50', borderColor: this.getTeamColorHex(this.radarTeamB), pointBackgroundColor: this.getTeamColorHex(this.radarTeamB), pointBorderColor: '#1a1a1a', borderWidth: 2 }
             ]
           },
           options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              r: {
-                angleLines: { color: 'rgba(255, 255, 255, 0.1)' },
-                grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                pointLabels: { color: '#d4d4d4', font: { size: 11, family: "'Inter', sans-serif", weight: 'bold' } },
-                ticks: { display: false, min: 0 } // Ukrywa zamazujące numery na osiach
-              }
-            },
-            plugins: {
-              legend: { position: 'bottom', labels: { color: '#a3a3a3', boxWidth: 12, padding: 20 } },
-              tooltip: { backgroundColor: "rgba(10, 10, 10, 0.9)", titleColor: "#fff", bodyColor: "#d4d4d4" }
-            }
+            responsive: true, maintainAspectRatio: false,
+            scales: { r: { angleLines: { color: 'rgba(255, 255, 255, 0.1)' }, grid: { color: 'rgba(255, 255, 255, 0.1)' }, pointLabels: { color: '#d4d4d4', font: { size: 11, family: "'Inter', sans-serif", weight: 'bold' } }, ticks: { display: false, min: 0 } } },
+            plugins: { legend: { position: 'bottom', labels: { color: '#a3a3a3', boxWidth: 12, padding: 20 } }, tooltip: { backgroundColor: "rgba(10, 10, 10, 0.9)", titleColor: "#fff", bodyColor: "#d4d4d4" } }
           }
         });
       },
@@ -123,8 +95,7 @@
       updateRadarChart() {
         const chart = Chart.getChart("radarChart");
         if (!chart) return;
-
-        const labels = ['Skrzydła', 'Podłoga', 'Zawieszenie', 'Nadwozie / Sidepody', 'Chłodzenie', 'Inne'];
+        const labels = ['Skrzydła', 'Podłoga', 'Zawieszenie i Hamulce', 'Nadwozie / Sidepody', 'Chłodzenie', 'Inne'];
         const getTeamData = (teamName) => {
           const data = [0, 0, 0, 0, 0, 0];
           if (!teamName) return data;
@@ -135,68 +106,27 @@
           });
           return data;
         };
-
-        // Aktualizacja Zespołu A
-        chart.data.datasets[0].label = this.radarTeamA;
-        chart.data.datasets[0].data = getTeamData(this.radarTeamA);
-        chart.data.datasets[0].backgroundColor = this.getTeamColorHex(this.radarTeamA) + '50';
-        chart.data.datasets[0].borderColor = this.getTeamColorHex(this.radarTeamA);
-        chart.data.datasets[0].pointBackgroundColor = this.getTeamColorHex(this.radarTeamA);
-
-        // Aktualizacja Zespołu B
-        chart.data.datasets[1].label = this.radarTeamB;
-        chart.data.datasets[1].data = getTeamData(this.radarTeamB);
-        chart.data.datasets[1].backgroundColor = this.getTeamColorHex(this.radarTeamB) + '50';
-        chart.data.datasets[1].borderColor = this.getTeamColorHex(this.radarTeamB);
-        chart.data.datasets[1].pointBackgroundColor = this.getTeamColorHex(this.radarTeamB);
-
+        chart.data.datasets[0].label = this.radarTeamA; chart.data.datasets[0].data = getTeamData(this.radarTeamA); chart.data.datasets[0].backgroundColor = this.getTeamColorHex(this.radarTeamA) + '50'; chart.data.datasets[0].borderColor = this.getTeamColorHex(this.radarTeamA); chart.data.datasets[0].pointBackgroundColor = this.getTeamColorHex(this.radarTeamA);
+        chart.data.datasets[1].label = this.radarTeamB; chart.data.datasets[1].data = getTeamData(this.radarTeamB); chart.data.datasets[1].backgroundColor = this.getTeamColorHex(this.radarTeamB) + '50'; chart.data.datasets[1].borderColor = this.getTeamColorHex(this.radarTeamB); chart.data.datasets[1].pointBackgroundColor = this.getTeamColorHex(this.radarTeamB);
         chart.update();
       },
 
-      // --- LOGIKA ROZWIJANEGO WYKRESU OŚ CZASU ---
       toggleChart() {
         this.showChart = !this.showChart;
-        if (this.showChart) {
-          setTimeout(() => {
-            if (!Chart.getChart("timelineChart")) {
-              this.initTimelineChart();
-            }
-          }, 100);
-        }
+        if (this.showChart) { setTimeout(() => { if (!Chart.getChart("timelineChart")) { this.initTimelineChart(); } }, 100); }
       },
-
-      showAllTeams() {
-        const chart = Chart.getChart("timelineChart");
-        if (chart) {
-          chart.data.datasets.forEach((_, index) => {
-            chart.setDatasetVisibility(index, true);
-          });
-          chart.update();
-        }
-      },
-
-      hideAllTeams() {
-        const chart = Chart.getChart("timelineChart");
-        if (chart) {
-          chart.data.datasets.forEach((_, index) => {
-            chart.setDatasetVisibility(index, false);
-          });
-          chart.update();
-        }
-      },
+      showAllTeams() { const chart = Chart.getChart("timelineChart"); if (chart) { chart.data.datasets.forEach((_, index) => { chart.setDatasetVisibility(index, true); }); chart.update(); } },
+      hideAllTeams() { const chart = Chart.getChart("timelineChart"); if (chart) { chart.data.datasets.forEach((_, index) => { chart.setDatasetVisibility(index, false); }); chart.update(); } },
 
       initTimelineChart() {
         const canvas = document.getElementById("timelineChart");
         if (!canvas) return;
         const ctx = canvas.getContext("2d");
-        
         const gpSet = new Set();
         const sortedUpgrades = [...this.upgrades].sort((a, b) => String(a.pdf_date).localeCompare(String(b.pdf_date)));
         sortedUpgrades.forEach(u => gpSet.add(u.grand_prix));
         const labels = Array.from(gpSet);
-        
         const teams = Array.from(new Set(this.upgrades.map(u => u.team)));
-        
         const datasets = teams.map(teamName => {
           let cumulativeSum = 0;
           const dataPoints = labels.map(gp => {
@@ -204,116 +134,60 @@
             cumulativeSum += upgradesInGp;
             return cumulativeSum;
           });
-          
-          return {
-            label: teamName,
-            data: dataPoints,
-            borderColor: this.getTeamColorHex(teamName),
-            backgroundColor: this.getTeamColorHex(teamName),
-            tension: 0.3,
-            pointRadius: 4,
-            pointHoverRadius: 6,
-            borderWidth: 3
-          };
+          return { label: teamName, data: dataPoints, borderColor: this.getTeamColorHex(teamName), backgroundColor: this.getTeamColorHex(teamName), tension: 0.3, pointRadius: 4, pointHoverRadius: 6, borderWidth: 3 };
         });
-
         new Chart(ctx, {
           type: "line",
-          data: {
-            labels: labels.map(l => l.replace(" Grand Prix", "")),
-            datasets: datasets
-          },
+          data: { labels: labels.map(l => l.replace(" Grand Prix", "")), datasets: datasets },
           options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: { mode: "index", intersect: false },
-            plugins: {
-              legend: { position: "bottom", labels: { boxWidth: 12, padding: 15 } },
-              tooltip: { backgroundColor: "rgba(10, 10, 10, 0.9)", titleColor: "#fff", bodyColor: "#d4d4d4", borderColor: "#333", borderWidth: 1 }
-            },
-            scales: {
-              y: { beginAtZero: true, grid: { color: "rgba(255, 255, 255, 0.1)" }, title: { display: true, text: "Skumulowana liczba poprawek" } },
-              x: { grid: { display: false } }
-            }
+            responsive: true, maintainAspectRatio: false, interaction: { mode: "index", intersect: false },
+            plugins: { legend: { position: "bottom", labels: { boxWidth: 12, padding: 15 } }, tooltip: { backgroundColor: "rgba(10, 10, 10, 0.9)", titleColor: "#fff", bodyColor: "#d4d4d4", borderColor: "#333", borderWidth: 1 } },
+            scales: { y: { beginAtZero: true, grid: { color: "rgba(255, 255, 255, 0.1)" }, title: { display: true, text: "Skumulowana liczba poprawek" } }, x: { grid: { display: false } } }
           }
         });
       },
 
-      // --- HOT DROP ---
       get latestGpName() {
         if (!this.upgrades || this.upgrades.length === 0) return "";
         const sorted = [...this.upgrades].sort((a, b) => String(b.pdf_date).localeCompare(String(a.pdf_date)));
         return sorted[0].grand_prix;
       },
-
       get groupedLatestUpgrades() {
         const latestGp = this.latestGpName;
         if (!latestGp) return [];
         const filtered = this.upgrades.filter(u => u.grand_prix === latestGp);
         const grouped = {};
-        
         filtered.forEach(item => {
           const key = item.team;
-          if (!grouped[key]) {
-            grouped[key] = {
-              team: item.team,
-              grand_prix: item.grand_prix,
-              source_url: item.source_url,
-              items: []
-            };
-          }
+          if (!grouped[key]) { grouped[key] = { team: item.team, grand_prix: item.grand_prix, source_url: item.source_url, items: [] }; }
           grouped[key].items.push(item);
         });
         return Object.values(grouped).sort((a, b) => a.team.localeCompare(b.team));
       },
 
-      // --- BAZA DANYCH ---
       get filteredUpgrades() {
         return this.upgrades.filter(item => {
           const matchGp = this.selectedGp === "Wszystkie" || item.grand_prix === this.selectedGp;
           const matchTeam = this.selectedTeam === "Wszystkie" || item.team === this.selectedTeam;
-          
           let matchType = true;
-          if (this.selectedReasonType === "Performance") {
-            matchType = item.reason.toLowerCase().includes("performance");
-          } else if (this.selectedReasonType === "Circuit Specific") {
-            matchType = item.reason.toLowerCase().includes("circuit");
-          }
-
+          if (this.selectedReasonType === "Performance") { matchType = item.reason.toLowerCase().includes("performance"); } 
+          else if (this.selectedReasonType === "Circuit Specific") { matchType = item.reason.toLowerCase().includes("circuit"); }
           const q = this.searchQuery.toLowerCase().trim();
-          const matchSearch = !q || 
-            item.component.toLowerCase().includes(q) || 
-            item.team.toLowerCase().includes(q) || 
-            (item.change_detail && item.change_detail.toLowerCase().includes(q)) ||
-            (item.description && item.description.toLowerCase().includes(q));
-
+          const matchSearch = !q || item.component.toLowerCase().includes(q) || item.team.toLowerCase().includes(q) || (item.change_detail && item.change_detail.toLowerCase().includes(q)) || (item.description && item.description.toLowerCase().includes(q));
           return matchGp && matchTeam && matchType && matchSearch;
         });
       },
-
-      get activeTeamsCount() {
-        const teams = new Set(this.filteredUpgrades.map(u => u.team));
-        return teams.size;
-      },
-
+      get activeTeamsCount() { const teams = new Set(this.filteredUpgrades.map(u => u.team)); return teams.size; },
       get groupedUpgrades() {
         const grouped = {};
         this.filteredUpgrades.forEach(item => {
           const key = `${item.team}-${item.grand_prix}`;
-          if (!grouped[key]) {
-            grouped[key] = {
-              team: item.team,
-              grand_prix: item.grand_prix,
-              source_url: item.source_url,
-              items: []
-            };
-          }
+          if (!grouped[key]) { grouped[key] = { team: item.team, grand_prix: item.grand_prix, source_url: item.source_url, items: [] }; }
           grouped[key].items.push(item);
         });
         return Object.values(grouped).sort((a, b) => a.team.localeCompare(b.team));
       },
 
-      // --- WIZUALIA ---
       getTeamColorCSS(teamName) {
         const team = teamName.toLowerCase();
         if (team.includes("red bull")) return "border-l-[6px] border-blue-600";
@@ -328,7 +202,6 @@
         if (team.includes("haas")) return "border-l-[6px] border-white";
         return "border-l-[6px] border-neutral-600";
       },
-
       getTeamColorHex(teamName) {
         const team = teamName.toLowerCase();
         if (team.includes("red bull")) return "#2563EB"; 
@@ -349,8 +222,8 @@
 
 <div x-data="f1Dashboard()">
 
-  <!-- MENU ZAKŁADEK (TABS) -->
-  <div class="flex space-x-6 mb-8 border-b border-bordercol">
+  <!-- MENU ZAKŁADEK (TABS) - DODANO TRZECIĄ ZAKŁADKĘ -->
+  <div class="flex space-x-6 mb-8 border-b border-bordercol overflow-x-auto whitespace-nowrap">
     <button @click="activeTab = 'home'" 
             class="pb-3 text-sm font-black uppercase tracking-widest transition-all duration-300 relative outline-none"
             :class="activeTab === 'home' ? 'text-white' : 'text-neutral-500 hover:text-neutral-300'">
@@ -364,10 +237,18 @@
       Pełna Baza Części
       <div x-show="activeTab === 'database'" class="absolute bottom-0 left-0 w-full h-1 bg-f1red rounded-t-md" style="display: none;"></div>
     </button>
+
+    <button @click="activeTab = 'live'" 
+            class="pb-3 text-sm font-black uppercase tracking-widest transition-all duration-300 relative outline-none flex items-center gap-2"
+            :class="activeTab === 'live' ? 'text-f1red' : 'text-neutral-500 hover:text-neutral-300'">
+      <div class="w-2 h-2 rounded-full animate-pulse" :class="activeTab === 'live' ? 'bg-f1red' : 'bg-neutral-500'"></div>
+      Live Tracker
+      <div x-show="activeTab === 'live'" class="absolute bottom-0 left-0 w-full h-1 bg-f1red rounded-t-md" style="display: none;"></div>
+    </button>
   </div>
 
-  <!-- === STATYSTYKI GLOBALNE === -->
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+  <!-- UKRYWAMY STATYSTYKI JEŚLI JESTEŚMY W ZAKŁADCE LIVE -->
+  <div x-show="activeTab !== 'live'" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
     <div class="bg-surface border border-bordercol rounded-xl p-4">
       <div class="text-xs uppercase tracking-wider text-neutral-400 font-semibold mb-1">Wyświetlane zmiany</div>
       <div class="text-2xl font-black text-white" x-text="filteredUpgrades.length"></div>
@@ -386,11 +267,75 @@
     </div>
   </div>
 
+  <!-- ========================================== -->
+  <!-- ZAKŁADKA 3: LIVE TIMING (NOWOŚĆ)           -->
+  <!-- ========================================== -->
+  <div x-show="activeTab === 'live'" x-transition.opacity.duration.400ms>
+    
+    <div class="bg-surface border border-bordercol rounded-xl p-5 mb-8 shadow-sm">
+      <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 border-b border-bordercol pb-4">
+        <div>
+          <h3 class="text-sm uppercase font-black text-f1red tracking-widest flex items-center gap-2">
+            <span class="w-2.5 h-2.5 bg-f1red rounded-full animate-pulse"></span>
+            Monitor Osiągów Na Żywo
+          </h3>
+          <p class="text-xs text-neutral-500 mt-1">Połączenie z serwerem FastF1 API (Tryb: Demo / Mock Data)</p>
+        </div>
+        <div class="bg-carbon border border-bordercol px-4 py-2 rounded-lg text-xs font-mono text-neutral-300">
+          Sesja: <span class="text-white font-bold">FP2 / KWALIFIKACJE</span>
+        </div>
+      </div>
+
+      <!-- Tabela Telemetryczna -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b border-bordercol text-[10px] uppercase tracking-widest text-neutral-500 font-bold">
+              <th class="p-3">Poz</th>
+              <th class="p-3">Nr</th>
+              <th class="p-3">Kierowca</th>
+              <th class="p-3">Strata</th>
+              <th class="p-3">Czas / Okr.</th>
+              <th class="p-3 text-center">Opona</th>
+              <th class="p-3 text-right">Status</th>
+            </tr>
+          </thead>
+          <tbody class="font-mono text-sm">
+            <template x-for="driver in mockLiveData" :key="driver.driver">
+              <tr class="border-b border-bordercol/30 hover:bg-carbon/50 transition">
+                <td class="p-3 text-neutral-300 font-black" x-text="driver.pos"></td>
+                <td class="p-3 text-neutral-500" x-text="driver.number"></td>
+                <td class="p-3 font-bold" :class="getTeamColorCSS(driver.team).replace('border-l-[6px] border-', 'text-')">
+                  <span class="px-2 border-l-4" :class="getTeamColorCSS(driver.team).replace('border-l-[6px]', '')" x-text="driver.driver"></span>
+                </td>
+                <td class="p-3 text-neutral-300" x-text="driver.gap"></td>
+                <td class="p-3 font-bold text-white" x-text="driver.lap"></td>
+                <td class="p-3 text-center">
+                  <!-- Kolorowe kółko opony z literą -->
+                  <div class="inline-flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-black border border-neutral-800 shadow-sm"
+                       :class="driver.tireColor" x-text="driver.tire.charAt(0)">
+                  </div>
+                </td>
+                <td class="p-3 text-right">
+                  <span x-show="driver.status === 'pit'" class="bg-neutral-800 text-neutral-300 text-[10px] px-2 py-1 rounded font-sans uppercase font-bold tracking-wider">W boksie</span>
+                  <span x-show="driver.status === 'track'" class="text-neutral-500 text-[10px] font-sans uppercase font-bold tracking-wider">Na torze</span>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+    <div class="text-center mt-4">
+      <p class="text-xs text-neutral-500">To jest widok testowy (Mock). Do poprawnego działania wymagane jest postawienie serwera Pythona nasłuchującego pakietów FastF1.</p>
+    </div>
+  </div>
 
   <!-- ========================================== -->
   <!-- ZAKŁADKA 1: DASHBOARD                      -->
   <!-- ========================================== -->
-  <div x-show="activeTab === 'home'" x-transition.opacity.duration.400ms>
+  <div x-show="activeTab === 'home'" x-transition.opacity.duration.400ms style="display: none;">
     
     <!-- HOT DROP -->
     <div x-show="latestGpName" class="mb-10 relative">
@@ -404,7 +349,6 @@
             </h2>
             <span class="ml-auto text-xs text-f1red border border-f1red/30 px-2 py-1 rounded bg-f1red/10 font-bold uppercase tracking-wider hidden sm:block">Hot Drop</span>
           </div>
-
           <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
             <template x-for="group in groupedLatestUpgrades" :key="'hot-' + group.team">
               <div class="bg-surface border border-bordercol rounded-xl overflow-hidden flex flex-col" :class="getTeamColorCSS(group.team)">
@@ -437,39 +381,27 @@
       </div>
     </div>
 
-    <!-- !!! NOWA SEKCJA: RADAR FILOZOFII (PAJĘCZYNA) !!! -->
+    <!-- RADAR FILOZOFII -->
     <div class="bg-surface border border-bordercol rounded-xl p-5 mb-8 shadow-sm">
       <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 border-b border-bordercol pb-4">
         <div>
           <h3 class="text-sm uppercase font-bold text-neutral-300 tracking-widest">Radar Filozofii Rozwoju</h3>
-          <p class="text-xs text-neutral-500 mt-1">Gdzie zespoły inwestują najwięcej zasobów aerodynamicznych? (Skupienie na elementach)</p>
+          <p class="text-xs text-neutral-500 mt-1">Gdzie zespoły inwestują najwięcej zasobów aerodynamicznych?</p>
         </div>
-        
-        <!-- Dropdowny do wyboru zespołów obok siebie -->
         <div class="flex flex-wrap justify-center items-center gap-3">
           <select x-model="radarTeamA" @change="updateRadarChart()" class="bg-carbon border border-bordercol rounded-lg px-3 py-1.5 text-sm font-bold text-white outline-none focus:border-f1red">
-            <template x-for="team in Array.from(new Set(upgrades.map(u => u.team))).sort()" :key="'radarA-'+team">
-              <option :value="team" x-text="team"></option>
-            </template>
+            <template x-for="team in Array.from(new Set(upgrades.map(u => u.team))).sort()" :key="'radarA-'+team"><option :value="team" x-text="team"></option></template>
           </select>
-          
           <span class="text-neutral-600 font-black text-xs uppercase italic mx-1">VS</span>
-          
           <select x-model="radarTeamB" @change="updateRadarChart()" class="bg-carbon border border-bordercol rounded-lg px-3 py-1.5 text-sm font-bold text-white outline-none focus:border-f1red">
-            <template x-for="team in Array.from(new Set(upgrades.map(u => u.team))).sort()" :key="'radarB-'+team">
-              <option :value="team" x-text="team"></option>
-            </template>
+            <template x-for="team in Array.from(new Set(upgrades.map(u => u.team))).sort()" :key="'radarB-'+team"><option :value="team" x-text="team"></option></template>
           </select>
         </div>
       </div>
-
-      <!-- Kontener Radaru -->
-      <div class="relative w-full h-[400px]">
-        <canvas id="radarChart"></canvas>
-      </div>
+      <div class="relative w-full h-[400px]"><canvas id="radarChart"></canvas></div>
     </div>
 
-    <!-- WYKRES ZBROJEŃ (Rozwijany) -->
+    <!-- WYKRES ZBROJEŃ -->
     <div class="bg-surface border border-bordercol rounded-xl mb-8 shadow-sm overflow-hidden">
       <div @click="toggleChart()" class="p-5 cursor-pointer bg-carbon/40 hover:bg-carbon/60 transition flex justify-between items-center border-b border-transparent" :class="showChart ? 'border-bordercol' : ''">
         <div class="flex items-center gap-3">
@@ -481,35 +413,23 @@
           <svg x-show="showChart" style="display: none;" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" /></svg>
         </button>
       </div>
-      
       <div x-show="showChart" x-transition.opacity.duration.300ms class="p-5 bg-surface" style="display: none;">
         <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-          <p class="text-[11px] text-neutral-400 uppercase tracking-widest text-center sm:text-left">
-            💡 <span class="text-white font-bold">Wybór zespołów:</span> Kliknij w legendę pod wykresem lub użyj przycisków obok.
-          </p>
+          <p class="text-[11px] text-neutral-400 uppercase tracking-widest text-center sm:text-left">💡 <span class="text-white font-bold">Wybór zespołów:</span> Kliknij w legendę pod wykresem lub użyj przycisków obok.</p>
           <div class="flex items-center gap-2">
-            <button @click="showAllTeams()" class="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-[11px] uppercase font-bold tracking-wider rounded border border-neutral-700 transition">
-              Włącz wszystkie
-            </button>
-            <button @click="hideAllTeams()" class="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-[11px] uppercase font-bold tracking-wider rounded border border-neutral-700 transition">
-              Wyłącz wszystkie
-            </button>
+            <button @click="showAllTeams()" class="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-[11px] uppercase font-bold tracking-wider rounded border border-neutral-700 transition">Włącz wszystkie</button>
+            <button @click="hideAllTeams()" class="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-[11px] uppercase font-bold tracking-wider rounded border border-neutral-700 transition">Wyłącz wszystkie</button>
           </div>
         </div>
-        <div class="relative w-full h-[400px]">
-          <canvas id="timelineChart"></canvas>
-        </div>
+        <div class="relative w-full h-[400px]"><canvas id="timelineChart"></canvas></div>
       </div>
     </div>
   </div>
-
 
   <!-- ========================================== -->
   <!-- ZAKŁADKA 2: PEŁNA BAZA DANYCH Z FILTRAMI   -->
   <!-- ========================================== -->
   <div x-show="activeTab === 'database'" x-transition.opacity.duration.400ms style="display: none;">
-    
-    <!-- Panel filtrów -->
     <div class="bg-surface border border-bordercol rounded-xl p-5 mb-8 shadow-sm">
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div>
@@ -545,22 +465,18 @@
       </div>
     </div>
 
-    <!-- Siatka wszystkich zbadanych części -->
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
       <template x-for="group in groupedUpgrades" :key="group.team + group.grand_prix">
         <div class="bg-surface border border-bordercol rounded-xl overflow-hidden shadow-md flex flex-col" :class="getTeamColorCSS(group.team)">
           <div class="bg-carbon/60 p-4 border-b border-bordercol flex justify-between items-center">
             <div>
               <h2 class="text-xl font-black text-white uppercase tracking-wider" x-text="group.team"></h2>
-              <div class="text-sm text-neutral-400 mt-1 flex items-center gap-1.5">
-                🏁 <span x-text="group.grand_prix"></span>
-              </div>
+              <div class="text-sm text-neutral-400 mt-1 flex items-center gap-1.5">🏁 <span x-text="group.grand_prix"></span></div>
             </div>
             <div class="text-xs font-bold text-neutral-500 bg-neutral-900 px-3 py-1 rounded-full border border-neutral-800">
               Części: <span class="text-neutral-300" x-text="group.items.length"></span>
             </div>
           </div>
-
           <div class="p-5 flex-grow space-y-6">
             <template x-for="(item, index) in group.items" :key="item.id">
               <div class="relative">
@@ -599,13 +515,11 @@
         </div>
       </template>
     </div>
-
     <div x-show="filteredUpgrades.length === 0" class="text-center py-16 bg-surface border border-bordercol rounded-xl mt-4">
       <div class="text-3xl mb-2">🔍</div>
       <div class="text-base font-bold text-white mb-1">Brak poprawek dla wybranych filtrów</div>
       <p class="text-xs text-neutral-400">Spróbuj wybrać inne Grand Prix, zresetować filtry lub wyczyścić pole wyszukiwania.</p>
     </div>
-
   </div> <!-- Koniec Zakładki 2 -->
 </div>
 {% endblock %}
