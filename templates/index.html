@@ -13,8 +13,22 @@
       selectedReasonType: "Wszystkie",
       searchQuery: "",
       
-      // Bezpieczne wstrzyknięcie bazy danych przez Jinja
       upgrades: {{ upgrades_json | safe }},
+
+      // Zmienne do kontroli wysuwanego wykresu
+      showChart: false,
+      chartInstance: null,
+
+      // Metoda rozwijająca/zwijająca wykres
+      toggleChart() {
+        this.showChart = !this.showChart;
+        // Rysujemy wykres tylko raz, dopiero gdy panel zostanie otwarty
+        if (this.showChart && !this.chartInstance) {
+          setTimeout(() => {
+            this.initChart();
+          }, 100); // 100ms opóźnienia, aby div zdążył się pojawić w DOM
+        }
+      },
 
       get filteredUpgrades() {
         return this.upgrades.filter(item => {
@@ -126,7 +140,7 @@
         Chart.defaults.color = "#a3a3a3";
         Chart.defaults.font.family = "'Inter', sans-serif";
 
-        new Chart(ctx, {
+        this.chartInstance = new Chart(ctx, {
           type: "line",
           data: {
             labels: labels.map(l => l.replace(" Grand Prix", "")),
@@ -169,8 +183,7 @@
   }
 </script>
 
-<!-- Inicjalizacja komponentu odwołująca się do funkcji f1Dashboard() -->
-<div x-data="f1Dashboard()" x-init="initChart()">
+<div x-data="f1Dashboard()">
 
   <!-- Statystyki na górze -->
   <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -192,11 +205,30 @@
     </div>
   </div>
 
-  <!-- Nowa sekcja: Wykres zbrojeń -->
-  <div class="bg-surface border border-bordercol rounded-xl p-5 mb-8 shadow-sm">
-    <h3 class="text-xs uppercase font-bold text-neutral-400 mb-4 tracking-widest">Oś czasu rozwoju zespołów w sezonie 2026</h3>
-    <div class="relative w-full h-[400px]">
-      <canvas id="timelineChart"></canvas>
+  <!-- Nowa sekcja: Wykres zbrojeń (Rozwijany) -->
+  <div class="bg-surface border border-bordercol rounded-xl mb-8 shadow-sm overflow-hidden">
+    <!-- Klikalny panel rozwijania -->
+    <div @click="toggleChart()" class="p-5 cursor-pointer bg-carbon/40 hover:bg-carbon/60 transition flex justify-between items-center border-b border-transparent" :class="showChart ? 'border-bordercol' : ''">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">📈</span>
+        <h3 class="text-sm uppercase font-bold text-neutral-300 tracking-widest">Oś czasu rozwoju zespołów (Kliknij, aby rozwinąć)</h3>
+      </div>
+      <button class="text-neutral-400">
+        <!-- Ikonka strzałki w dół gdy schowane -->
+        <svg x-show="!showChart" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+        <!-- Ikonka strzałki w górę gdy rozwinięte -->
+        <svg x-show="showChart" style="display: none;" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" /></svg>
+      </button>
+    </div>
+    
+    <!-- Wnętrze z wykresem -->
+    <div x-show="showChart" x-transition.opacity.duration.300ms class="p-5 bg-surface" style="display: none;">
+      <p class="text-[11px] text-neutral-400 uppercase tracking-widest mb-4 text-center">
+        💡 <span class="text-white font-bold">Wybór zespołów:</span> Kliknij w nazwę stajni w legendzie pod wykresem, aby wyłączyć lub włączyć jej linię.
+      </p>
+      <div class="relative w-full h-[400px]">
+        <canvas id="timelineChart"></canvas>
+      </div>
     </div>
   </div>
 
