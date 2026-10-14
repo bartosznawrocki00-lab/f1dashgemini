@@ -4,7 +4,6 @@
 <!-- Załadowanie biblioteki Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- Bezpieczna definicja logiki i danych poza atrybutami HTML -->
 <script>
   function f1Dashboard() {
     return {
@@ -15,36 +14,40 @@
       
       upgrades: {{ upgrades_json | safe }},
 
-      // Zmienne do kontroli wysuwanego wykresu
+      // Zmienna do kontroli wysuwanego kontenera (bez obiektu wykresu!)
       showChart: false,
-      chartInstance: null,
 
       // Metoda rozwijająca/zwijająca wykres
       toggleChart() {
         this.showChart = !this.showChart;
-        if (this.showChart && !this.chartInstance) {
+        if (this.showChart) {
           setTimeout(() => {
-            this.initChart();
+            // Bezpieczne sprawdzanie przez wbudowaną funkcję Chart.js, czy wykres już istnieje
+            if (!Chart.getChart("timelineChart")) {
+              this.initChart();
+            }
           }, 100);
         }
       },
 
-      // Przyciski sterujące legendą wykresu
+      // Przyciski sterujące legendą - pytamy Chart.js bezpośrednio o instancję
       showAllTeams() {
-        if (this.chartInstance) {
-          this.chartInstance.data.datasets.forEach((_, index) => {
-            this.chartInstance.setDatasetVisibility(index, true);
+        const chart = Chart.getChart("timelineChart");
+        if (chart) {
+          chart.data.datasets.forEach((_, index) => {
+            chart.setDatasetVisibility(index, true);
           });
-          this.chartInstance.update();
+          chart.update();
         }
       },
 
       hideAllTeams() {
-        if (this.chartInstance) {
-          this.chartInstance.data.datasets.forEach((_, index) => {
-            this.chartInstance.setDatasetVisibility(index, false);
+        const chart = Chart.getChart("timelineChart");
+        if (chart) {
+          chart.data.datasets.forEach((_, index) => {
+            chart.setDatasetVisibility(index, false);
           });
-          this.chartInstance.update();
+          chart.update();
         }
       },
 
@@ -158,7 +161,8 @@
         Chart.defaults.color = "#a3a3a3";
         Chart.defaults.font.family = "'Inter', sans-serif";
 
-        this.chartInstance = new Chart(ctx, {
+        // Tworzymy wykres bez dopisywania go do zmiennych Alpine ("this.")
+        new Chart(ctx, {
           type: "line",
           data: {
             labels: labels.map(l => l.replace(" Grand Prix", "")),
