@@ -368,9 +368,10 @@
                        :class="driver.tireColor" x-text="driver.tire.charAt(0)">
                   </div>
                 </td>
-                <td class="p-3 text-right">
-                  <span x-show="driver.status === 'pit'" class="bg-neutral-800 text-neutral-300 text-[10px] px-2 py-1 rounded font-sans uppercase font-bold tracking-wider">W boksie</span>
-                  <span x-show="driver.status === 'track'" class="text-neutral-500 text-[10px] font-sans uppercase font-bold tracking-wider">Na torze</span>
+                <td class="p-3 text-right flex justify-end gap-1">
+                  <span x-show="driver.status === 'pit'" class="bg-yellow-500 text-black text-[10px] px-2 py-1 rounded font-sans uppercase font-black tracking-wider shadow-sm">PIT</span>
+                  <span x-show="driver.status === 'track'" class="text-neutral-500 text-[10px] font-sans uppercase font-bold tracking-wider">TRACK</span>
+                  <span x-show="driver.status === 'out'" class="bg-red-700 text-white text-[10px] px-2 py-1 rounded font-sans uppercase font-black tracking-wider shadow-sm">OUT</span>
                 </td>
               </tr>
             </template>
