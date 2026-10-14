@@ -7,10 +7,8 @@
 <script>
   function f1Dashboard() {
     return {
-      // --- ZAKŁADKI ---
-      activeTab: 'home', // 'home' lub 'database'
+      activeTab: 'home',
 
-      // --- FILTRY ---
       selectedGp: "Wszystkie",
       selectedTeam: "Wszystkie",
       selectedReasonType: "Wszystkie",
@@ -18,7 +16,6 @@
       
       upgrades: {{ upgrades_json | safe }},
 
-      // --- WYKRES ---
       showChart: false,
 
       toggleChart() {
@@ -52,7 +49,6 @@
         }
       },
 
-      // --- HOT DROP ---
       get latestGpName() {
         if (!this.upgrades || this.upgrades.length === 0) return "";
         const sorted = [...this.upgrades].sort((a, b) => String(b.pdf_date).localeCompare(String(a.pdf_date)));
@@ -80,7 +76,6 @@
         return Object.values(grouped).sort((a, b) => a.team.localeCompare(b.team));
       },
 
-      // --- BAZA DANYCH ---
       get filteredUpgrades() {
         return this.upgrades.filter(item => {
           const matchGp = this.selectedGp === "Wszystkie" || item.grand_prix === this.selectedGp;
@@ -126,7 +121,6 @@
         return Object.values(grouped).sort((a, b) => a.team.localeCompare(b.team));
       },
 
-      // --- WIZUALIA ---
       getTeamColorCSS(teamName) {
         const team = teamName.toLowerCase();
         if (team.includes("red bull")) return "border-l-[6px] border-blue-600";
@@ -243,7 +237,6 @@
             class="pb-3 text-sm font-black uppercase tracking-widest transition-all duration-300 relative outline-none"
             :class="activeTab === 'home' ? 'text-white' : 'text-neutral-500 hover:text-neutral-300'">
       Dashboard
-      <!-- Podświetlenie aktywnej zakładki -->
       <div x-show="activeTab === 'home'" class="absolute bottom-0 left-0 w-full h-1 bg-f1red rounded-t-md"></div>
     </button>
     
@@ -255,31 +248,32 @@
     </button>
   </div>
 
+  <!-- === STATYSTYKI GLOBALNE (WIDOCZNE WSZĘDZIE) === -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <div class="bg-surface border border-bordercol rounded-xl p-4">
+      <div class="text-xs uppercase tracking-wider text-neutral-400 font-semibold mb-1">Wyświetlane zmiany</div>
+      <div class="text-2xl font-black text-white" x-text="filteredUpgrades.length"></div>
+    </div>
+    <div class="bg-surface border border-bordercol rounded-xl p-4">
+      <div class="text-xs uppercase tracking-wider text-neutral-400 font-semibold mb-1">Zespoły ze zmianami</div>
+      <div class="text-2xl font-black text-white" x-text="activeTeamsCount"></div>
+    </div>
+    <div class="bg-surface border border-bordercol rounded-xl p-4">
+      <div class="text-xs uppercase tracking-wider text-neutral-400 font-semibold mb-1">Wszystkie w bazie</div>
+      <div class="text-2xl font-black text-neutral-300" x-text="upgrades.length"></div>
+    </div>
+    <div class="bg-surface border border-bordercol rounded-xl p-4">
+      <div class="text-xs uppercase tracking-wider text-neutral-400 font-semibold mb-1">Dostępne GP</div>
+      <div class="text-2xl font-black text-neutral-300">{{ grand_prix_list|length }}</div>
+    </div>
+  </div>
+
+
   <!-- ========================================== -->
   <!-- ZAKŁADKA 1: DASHBOARD (HOT DROP + WYKRES)  -->
   <!-- ========================================== -->
   <div x-show="activeTab === 'home'" x-transition.opacity.duration.400ms>
     
-    <!-- Statystyki -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-      <div class="bg-surface border border-bordercol rounded-xl p-4">
-        <div class="text-xs uppercase tracking-wider text-neutral-400 font-semibold mb-1">Wyświetlane zmiany</div>
-        <div class="text-2xl font-black text-white" x-text="filteredUpgrades.length"></div>
-      </div>
-      <div class="bg-surface border border-bordercol rounded-xl p-4">
-        <div class="text-xs uppercase tracking-wider text-neutral-400 font-semibold mb-1">Zespoły ze zmianami</div>
-        <div class="text-2xl font-black text-white" x-text="activeTeamsCount"></div>
-      </div>
-      <div class="bg-surface border border-bordercol rounded-xl p-4">
-        <div class="text-xs uppercase tracking-wider text-neutral-400 font-semibold mb-1">Wszystkie w bazie</div>
-        <div class="text-2xl font-black text-neutral-300" x-text="upgrades.length"></div>
-      </div>
-      <div class="bg-surface border border-bordercol rounded-xl p-4">
-        <div class="text-xs uppercase tracking-wider text-neutral-400 font-semibold mb-1">Dostępne GP</div>
-        <div class="text-2xl font-black text-neutral-300">{{ grand_prix_list|length }}</div>
-      </div>
-    </div>
-
     <!-- HOT DROP -->
     <div x-show="latestGpName" class="mb-10 relative">
       <div class="absolute -inset-1 bg-gradient-to-r from-f1red to-orange-600 rounded-2xl blur opacity-25"></div>
@@ -456,7 +450,6 @@
       </template>
     </div>
 
-    <!-- Pusty stan -->
     <div x-show="filteredUpgrades.length === 0" class="text-center py-16 bg-surface border border-bordercol rounded-xl mt-4">
       <div class="text-3xl mb-2">🔍</div>
       <div class="text-base font-bold text-white mb-1">Brak poprawek dla wybranych filtrów</div>
