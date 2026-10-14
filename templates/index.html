@@ -24,23 +24,32 @@
       radarTeamA: '',
       radarTeamB: '',
 
-      // --- MOCK DATA: TYMCZASOWE DANE DO LIVE TIMINGU ---
-      // W Etapie 2 te dane będą pobierane z Twojego serwera FastF1
-      mockLiveData: [
-        { pos: 1, number: 1, driver: "VER", team: "Red Bull Racing", gap: "Leader", lap: "1:30.214", tire: "Soft", tireColor: "bg-red-600 text-white", status: "track" },
-        { pos: 2, number: 4, driver: "NOR", team: "McLaren", gap: "+0.215", lap: "1:30.429", tire: "Medium", tireColor: "bg-yellow-400 text-black", status: "track" },
-        { pos: 3, number: 16, driver: "LEC", team: "Ferrari", gap: "+0.512", lap: "1:30.726", tire: "Soft", tireColor: "bg-red-600 text-white", status: "track" },
-        { pos: 4, number: 44, driver: "HAM", team: "Mercedes", gap: "+0.840", lap: "1:31.054", tire: "Hard", tireColor: "bg-white text-black", status: "track" },
-        { pos: 5, number: 81, driver: "PIA", team: "McLaren", gap: "+1.102", lap: "1:31.316", tire: "Medium", tireColor: "bg-yellow-400 text-black", status: "pit" },
-        { pos: 6, number: 14, driver: "ALO", team: "Aston Martin", gap: "+1.450", lap: "1:31.664", tire: "Soft", tireColor: "bg-red-600 text-white", status: "track" },
-        { pos: 7, number: 55, driver: "SAI", team: "Ferrari", gap: "+1.600", lap: "1:31.814", tire: "Hard", tireColor: "bg-white text-black", status: "track" },
-        { pos: 8, number: 63, driver: "RUS", team: "Mercedes", gap: "+1.950", lap: "1:32.164", tire: "Inters", tireColor: "bg-green-500 text-white", status: "track" }
-      ],
+      // Tabela na start jest pusta, za chwilę wypełni ją serwer Render
+      mockLiveData: [],
 
       init() {
         setTimeout(() => {
           this.initRadarChart();
         }, 100);
+        
+        // Odpalamy nasłuch!
+        this.startLiveTiming();
+      },
+
+      startLiveTiming() {
+        setInterval(() => {
+          if (this.activeTab === 'live') {
+            // Pukanie do chmury co sekundę
+            fetch('https://f1-live-api-znjg.onrender.com/api/live')
+              .then(res => res.json())
+              .then(data => {
+                this.mockLiveData = data;
+              })
+              .catch(err => {
+                console.warn("Brak połączenia z chmurą Render.");
+              });
+          }
+        }, 1000);
       },
 
       // ... (tutaj znajdują się Twoje dotychczasowe funkcje radaru i wykresu osi czasu) ...
