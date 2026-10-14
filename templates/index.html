@@ -4,167 +4,173 @@
 <!-- Załadowanie biblioteki Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<div x-data='{
-  selectedGp: "Wszystkie",
-  selectedTeam: "Wszystkie",
-  selectedReasonType: "Wszystkie",
-  searchQuery: "",
-  upgrades: {{ upgrades_json | safe }},
-
-  get filteredUpgrades() {
-    return this.upgrades.filter(item => {
-      const matchGp = this.selectedGp === "Wszystkie" || item.grand_prix === this.selectedGp;
-      const matchTeam = this.selectedTeam === "Wszystkie" || item.team === this.selectedTeam;
+<!-- Bezpieczna definicja logiki i danych poza atrybutami HTML -->
+<script>
+  function f1Dashboard() {
+    return {
+      selectedGp: "Wszystkie",
+      selectedTeam: "Wszystkie",
+      selectedReasonType: "Wszystkie",
+      searchQuery: "",
       
-      let matchType = true;
-      if (this.selectedReasonType === "Performance") {
-        matchType = item.reason.toLowerCase().includes("performance");
-      } else if (this.selectedReasonType === "Circuit Specific") {
-        matchType = item.reason.toLowerCase().includes("circuit");
-      }
+      // Bezpieczne wstrzyknięcie bazy danych przez Jinja
+      upgrades: {{ upgrades_json | safe }},
 
-      const q = this.searchQuery.toLowerCase().trim();
-      const matchSearch = !q || 
-        item.component.toLowerCase().includes(q) || 
-        item.team.toLowerCase().includes(q) || 
-        item.change_detail.toLowerCase().includes(q) ||
-        item.description.toLowerCase().includes(q);
+      get filteredUpgrades() {
+        return this.upgrades.filter(item => {
+          const matchGp = this.selectedGp === "Wszystkie" || item.grand_prix === this.selectedGp;
+          const matchTeam = this.selectedTeam === "Wszystkie" || item.team === this.selectedTeam;
+          
+          let matchType = true;
+          if (this.selectedReasonType === "Performance") {
+            matchType = item.reason.toLowerCase().includes("performance");
+          } else if (this.selectedReasonType === "Circuit Specific") {
+            matchType = item.reason.toLowerCase().includes("circuit");
+          }
 
-      return matchGp && matchTeam && matchType && matchSearch;
-    });
-  },
+          const q = this.searchQuery.toLowerCase().trim();
+          const matchSearch = !q || 
+            item.component.toLowerCase().includes(q) || 
+            item.team.toLowerCase().includes(q) || 
+            (item.change_detail && item.change_detail.toLowerCase().includes(q)) ||
+            (item.description && item.description.toLowerCase().includes(q));
 
-  get activeTeamsCount() {
-    const teams = new Set(this.filteredUpgrades.map(u => u.team));
-    return teams.size;
-  },
-
-  get groupedUpgrades() {
-    const grouped = {};
-    this.filteredUpgrades.forEach(item => {
-      const key = `${item.team}-${item.grand_prix}`;
-      if (!grouped[key]) {
-        grouped[key] = {
-          team: item.team,
-          grand_prix: item.grand_prix,
-          source_url: item.source_url,
-          items: []
-        };
-      }
-      grouped[key].items.push(item);
-    });
-    return Object.values(grouped).sort((a, b) => a.team.localeCompare(b.team));
-  },
-
-  getTeamColorCSS(teamName) {
-    const team = teamName.toLowerCase();
-    if (team.includes("red bull")) return "border-l-[6px] border-blue-600";
-    if (team.includes("ferrari")) return "border-l-[6px] border-red-600";
-    if (team.includes("mercedes")) return "border-l-[6px] border-teal-400";
-    if (team.includes("mclaren")) return "border-l-[6px] border-orange-500";
-    if (team.includes("aston martin")) return "border-l-[6px] border-emerald-700";
-    if (team.includes("alpine")) return "border-l-[6px] border-pink-500"; 
-    if (team.includes("williams")) return "border-l-[6px] border-blue-400";
-    if (team.includes("vcarb") || team.includes("rb")) return "border-l-[6px] border-blue-700";
-    if (team.includes("sauber") || team.includes("stake")) return "border-l-[6px] border-green-500";
-    if (team.includes("haas")) return "border-l-[6px] border-white";
-    return "border-l-[6px] border-neutral-600";
-  },
-
-  // Funkcja zwracająca HEX koloru dla wykresu
-  getTeamColorHex(teamName) {
-    const team = teamName.toLowerCase();
-    if (team.includes("red bull")) return "#2563EB"; // blue-600
-    if (team.includes("ferrari")) return "#DC2626"; // red-600
-    if (team.includes("mercedes")) return "#2DD4BF"; // teal-400
-    if (team.includes("mclaren")) return "#F97316"; // orange-500
-    if (team.includes("aston martin")) return "#047857"; // emerald-700
-    if (team.includes("alpine")) return "#EC4899"; // pink-500
-    if (team.includes("williams")) return "#60A5FA"; // blue-400
-    if (team.includes("vcarb") || team.includes("rb")) return "#1D4ED8"; // blue-700
-    if (team.includes("sauber") || team.includes("stake")) return "#22C55E"; // green-500
-    if (team.includes("haas")) return "#FFFFFF"; // white
-    return "#525252"; // neutral-600
-  },
-
-  // Funkcja inicjalizująca wykres po załadowaniu Alpine
-  initChart() {
-    const ctx = document.getElementById("timelineChart").getContext("2d");
-    
-    // Zbieramy unikalne Grand Prix (posortowane chronologicznie na podstawie numerka z bazy)
-    const gpSet = new Set();
-    const sortedUpgrades = [...this.upgrades].sort((a, b) => String(a.pdf_date).localeCompare(String(b.pdf_date)));
-    sortedUpgrades.forEach(u => gpSet.add(u.grand_prix));
-    const labels = Array.from(gpSet);
-    
-    // Szukamy wszystkich unikalnych zespołów
-    const teams = Array.from(new Set(this.upgrades.map(u => u.team)));
-    
-    // Budujemy dataset dla każdego zespołu (skumulowana suma poprawek)
-    const datasets = teams.map(teamName => {
-      let cumulativeSum = 0;
-      const dataPoints = labels.map(gp => {
-        // Liczymy poprawki dla zespołu w tym konkretnym wyścigu
-        const upgradesInGp = this.upgrades.filter(u => u.team === teamName && u.grand_prix === gp).length;
-        cumulativeSum += upgradesInGp;
-        return cumulativeSum;
-      });
-      
-      return {
-        label: teamName,
-        data: dataPoints,
-        borderColor: this.getTeamColorHex(teamName),
-        backgroundColor: this.getTeamColorHex(teamName),
-        tension: 0.3, // Zakrzywia linię
-        pointRadius: 4,
-        pointHoverRadius: 6,
-        borderWidth: 3
-      };
-    });
-
-    Chart.defaults.color = "#a3a3a3"; // Jasnoszary tekst dla ciemnego motywu
-    Chart.defaults.font.family = "'Inter', sans-serif";
-
-    new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: labels.map(l => l.replace(" Grand Prix", "")), // Skrócenie nazw do samego miasta
-        datasets: datasets
+          return matchGp && matchTeam && matchType && matchSearch;
+        });
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: {
-          mode: "index",
-          intersect: false,
-        },
-        plugins: {
-          legend: {
-            position: "bottom",
-            labels: { boxWidth: 12, padding: 15 }
-          },
-          tooltip: {
-            backgroundColor: "rgba(10, 10, 10, 0.9)",
-            titleColor: "#fff",
-            bodyColor: "#d4d4d4",
-            borderColor: "#333",
-            borderWidth: 1
+
+      get activeTeamsCount() {
+        const teams = new Set(this.filteredUpgrades.map(u => u.team));
+        return teams.size;
+      },
+
+      get groupedUpgrades() {
+        const grouped = {};
+        this.filteredUpgrades.forEach(item => {
+          const key = `${item.team}-${item.grand_prix}`;
+          if (!grouped[key]) {
+            grouped[key] = {
+              team: item.team,
+              grand_prix: item.grand_prix,
+              source_url: item.source_url,
+              items: []
+            };
           }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            grid: { color: "rgba(255, 255, 255, 0.1)" },
-            title: { display: true, text: "Skumulowana liczba poprawek" }
+          grouped[key].items.push(item);
+        });
+        return Object.values(grouped).sort((a, b) => a.team.localeCompare(b.team));
+      },
+
+      getTeamColorCSS(teamName) {
+        const team = teamName.toLowerCase();
+        if (team.includes("red bull")) return "border-l-[6px] border-blue-600";
+        if (team.includes("ferrari")) return "border-l-[6px] border-red-600";
+        if (team.includes("mercedes")) return "border-l-[6px] border-teal-400";
+        if (team.includes("mclaren")) return "border-l-[6px] border-orange-500";
+        if (team.includes("aston martin")) return "border-l-[6px] border-emerald-700";
+        if (team.includes("alpine")) return "border-l-[6px] border-pink-500"; 
+        if (team.includes("williams")) return "border-l-[6px] border-blue-400";
+        if (team.includes("vcarb") || team.includes("rb")) return "border-l-[6px] border-blue-700";
+        if (team.includes("sauber") || team.includes("stake")) return "border-l-[6px] border-green-500";
+        if (team.includes("haas")) return "border-l-[6px] border-white";
+        return "border-l-[6px] border-neutral-600";
+      },
+
+      getTeamColorHex(teamName) {
+        const team = teamName.toLowerCase();
+        if (team.includes("red bull")) return "#2563EB"; 
+        if (team.includes("ferrari")) return "#DC2626"; 
+        if (team.includes("mercedes")) return "#2DD4BF"; 
+        if (team.includes("mclaren")) return "#F97316"; 
+        if (team.includes("aston martin")) return "#047857"; 
+        if (team.includes("alpine")) return "#EC4899"; 
+        if (team.includes("williams")) return "#60A5FA"; 
+        if (team.includes("vcarb") || team.includes("rb")) return "#1D4ED8"; 
+        if (team.includes("sauber") || team.includes("stake")) return "#22C55E"; 
+        if (team.includes("haas")) return "#FFFFFF"; 
+        return "#525252"; 
+      },
+
+      initChart() {
+        const canvas = document.getElementById("timelineChart");
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        
+        const gpSet = new Set();
+        const sortedUpgrades = [...this.upgrades].sort((a, b) => String(a.pdf_date).localeCompare(String(b.pdf_date)));
+        sortedUpgrades.forEach(u => gpSet.add(u.grand_prix));
+        const labels = Array.from(gpSet);
+        
+        const teams = Array.from(new Set(this.upgrades.map(u => u.team)));
+        
+        const datasets = teams.map(teamName => {
+          let cumulativeSum = 0;
+          const dataPoints = labels.map(gp => {
+            const upgradesInGp = this.upgrades.filter(u => u.team === teamName && u.grand_prix === gp).length;
+            cumulativeSum += upgradesInGp;
+            return cumulativeSum;
+          });
+          
+          return {
+            label: teamName,
+            data: dataPoints,
+            borderColor: this.getTeamColorHex(teamName),
+            backgroundColor: this.getTeamColorHex(teamName),
+            tension: 0.3,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            borderWidth: 3
+          };
+        });
+
+        Chart.defaults.color = "#a3a3a3";
+        Chart.defaults.font.family = "'Inter', sans-serif";
+
+        new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: labels.map(l => l.replace(" Grand Prix", "")),
+            datasets: datasets
           },
-          x: {
-            grid: { display: false }
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+              mode: "index",
+              intersect: false,
+            },
+            plugins: {
+              legend: {
+                position: "bottom",
+                labels: { boxWidth: 12, padding: 15 }
+              },
+              tooltip: {
+                backgroundColor: "rgba(10, 10, 10, 0.9)",
+                titleColor: "#fff",
+                bodyColor: "#d4d4d4",
+                borderColor: "#333",
+                borderWidth: 1
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                grid: { color: "rgba(255, 255, 255, 0.1)" },
+                title: { display: true, text: "Skumulowana liczba poprawek" }
+              },
+              x: {
+                grid: { display: false }
+              }
+            }
           }
-        }
+        });
       }
-    });
+    };
   }
-}' x-init="initChart()"> <!-- Odpala rysowanie zaraz po załadowaniu danych -->
+</script>
+
+<!-- Inicjalizacja komponentu odwołująca się do funkcji f1Dashboard() -->
+<div x-data="f1Dashboard()" x-init="initChart()">
 
   <!-- Statystyki na górze -->
   <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -189,7 +195,6 @@
   <!-- Nowa sekcja: Wykres zbrojeń -->
   <div class="bg-surface border border-bordercol rounded-xl p-5 mb-8 shadow-sm">
     <h3 class="text-xs uppercase font-bold text-neutral-400 mb-4 tracking-widest">Oś czasu rozwoju zespołów w sezonie 2026</h3>
-    <!-- Kontener wymuszający wysokość wykresu -->
     <div class="relative w-full h-[400px]">
       <canvas id="timelineChart"></canvas>
     </div>
@@ -286,18 +291,4 @@
           <div class="bg-carbon/40 p-3 border-t border-bordercol text-right">
             <a :href="group.source_url" target="_blank" rel="noopener noreferrer" class="text-[11px] uppercase tracking-wider text-neutral-500 hover:text-white font-bold transition flex items-center justify-end gap-1.5">
               Dokument źródłowy FIA 
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-            </a>
-          </div>
-        </template>
-      </div>
-    </template>
-  </div>
-
-  <div x-show="filteredUpgrades.length === 0" class="text-center py-16 bg-surface border border-bordercol rounded-xl mt-4">
-    <div class="text-3xl mb-2">🔍</div>
-    <div class="text-base font-bold text-white mb-1">Brak poprawek dla wybranych filtrów</div>
-    <p class="text-xs text-neutral-400">Spróbuj wybrać inne Grand Prix, zresetować filtry lub wyczyścić pole wyszukiwania.</p>
-  </div>
-</div>
-{% endblock %}
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0
