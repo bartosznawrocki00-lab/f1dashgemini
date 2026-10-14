@@ -2,6 +2,8 @@ Flask
 flask-cors
 gunicorn
 requests>=2.31.0
+fastf1
+pandas
 jinja2>=3.1.2
 pdfplumber>=0.11.0
 beautifulsoup4>=4.12.0
