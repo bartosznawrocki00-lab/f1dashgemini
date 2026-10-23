@@ -30,7 +30,7 @@ jobs:
       - name: Zainstaluj biblioteki
         run: |
           pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install requests jinja2 pdfplumber beautifulsoup4
 
       - name: Pobierz aktualizacje i zbuduj stronę
         run: |
