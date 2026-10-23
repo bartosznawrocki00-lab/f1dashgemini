@@ -10,8 +10,6 @@
 
   function f1Dashboard() {
     return {
-      // Dodana domyślna zakładka 'live', żebyś od razu po odświeżeniu widział efekt!
-      // (Później możemy zmienić z powrotem na 'home')
       activeTab: 'live',
 
       selectedGp: "Wszystkie",
@@ -21,8 +19,6 @@
       
       upgrades: {{ upgrades_json | safe }},
       showChart: false,
-      radarTeamA: '',
-      radarTeamB: '',
 
       // Tabela na start jest pusta, za chwilę wypełni ją serwer Render
       mockLiveData: [],
@@ -32,7 +28,6 @@
       isPlaying: true,
 
       init() {
-        setTimeout(() => { this.initRadarChart(); }, 100);
         this.fetchLapData(this.currentLap);
         this.startLiveTiming();
       },
@@ -44,11 +39,10 @@
               this.currentLap++;
               this.fetchLapData(this.currentLap);
             } else if (this.serverStatus === 'loading') {
-              // Jeżeli serwer wciąż ładuje FastF1 z neta, odpytuj aż wstanie
               this.fetchLapData(this.currentLap);
             }
           }
-        }, 3000); // Odtwarzanie: 1 okrążenie co 3 sekundy
+        }, 3000); 
       },
 
       fetchLapData(lap) {
@@ -74,74 +68,6 @@
          this.fetchLapData(this.currentLap);
       },
 
-      // ... (tutaj znajdują się Twoje dotychczasowe funkcje radaru i wykresu osi czasu) ...
-      getComponentCategory(compRaw) {
-        const c = compRaw.toLowerCase();
-        if (c.includes('wing') || c.includes('flap') || c.includes('cascade') || c.includes('rwe') || c.includes('fwe') || c.includes('gurney') || c.includes('endplate') || c.includes('pillar') || c.includes('pylon')) return 'Skrzydła';
-        if (c.includes('floor') || c.includes('diffuser') || c.includes('edge') || c.includes('fence') || c.includes('strakes') || c.includes('bib') || c.includes('skid') || c.includes('tray')) return 'Podłoga';
-        if (c.includes('suspension') || c.includes('track rod') || c.includes('wishbone') || c.includes('pullrod') || c.includes('pushrod') || c.includes('brake') || c.includes('drum') || c.includes('duct') || c.includes('fairing') || c.includes('upright') || c.includes('corner')) return 'Zawieszenie i Hamulce';
-        if (c.includes('sidepod') || c.includes('cover') || c.includes('coke') || c.includes('bodywork') || c.includes('engine') || c.includes('cowl') || c.includes('halo') || c.includes('mirror') || c.includes('nose') || c.includes('chassis') || c.includes('cockpit') || c.includes('headrest')) return 'Nadwozie / Sidepody';
-        if (c.includes('cooling') || c.includes('louvre') || c.includes('louver') || c.includes('gill') || c.includes('vent')) return 'Chłodzenie';
-        return 'Inne';
-      },
-
-      initRadarChart() {
-        const canvas = document.getElementById("radarChart");
-        if (!canvas) return;
-        if (Chart.getChart("radarChart")) Chart.getChart("radarChart").destroy();
-        const ctx = canvas.getContext("2d");
-        const labels = ['Skrzydła', 'Podłoga', 'Zawieszenie i Hamulce', 'Nadwozie / Sidepody', 'Chłodzenie', 'Inne'];
-        const allTeams = Array.from(new Set(this.upgrades.map(u => u.team))).sort();
-        if (allTeams.length >= 2) {
-          if (!this.radarTeamA) this.radarTeamA = allTeams[allTeams.findIndex(t => t.includes('Ferrari'))] || allTeams[0];
-          if (!this.radarTeamB) this.radarTeamB = allTeams[allTeams.findIndex(t => t.includes('McLaren') || t.includes('Red Bull'))] || allTeams[1];
-        }
-        const getTeamData = (teamName) => {
-          const data = [0, 0, 0, 0, 0, 0];
-          if (!teamName) return data;
-          this.upgrades.filter(u => u.team === teamName).forEach(u => {
-            const cat = this.getComponentCategory(u.component);
-            const idx = labels.indexOf(cat);
-            if(idx !== -1) data[idx]++;
-          });
-          return data;
-        };
-        new Chart(ctx, {
-          type: 'radar',
-          data: {
-            labels: labels,
-            datasets: [
-              { label: this.radarTeamA, data: getTeamData(this.radarTeamA), backgroundColor: this.getTeamColorHex(this.radarTeamA) + '50', borderColor: this.getTeamColorHex(this.radarTeamA), pointBackgroundColor: this.getTeamColorHex(this.radarTeamA), pointBorderColor: '#1a1a1a', borderWidth: 2 },
-              { label: this.radarTeamB, data: getTeamData(this.radarTeamB), backgroundColor: this.getTeamColorHex(this.radarTeamB) + '50', borderColor: this.getTeamColorHex(this.radarTeamB), pointBackgroundColor: this.getTeamColorHex(this.radarTeamB), pointBorderColor: '#1a1a1a', borderWidth: 2 }
-            ]
-          },
-          options: {
-            responsive: true, maintainAspectRatio: false,
-            scales: { r: { angleLines: { color: 'rgba(255, 255, 255, 0.1)' }, grid: { color: 'rgba(255, 255, 255, 0.1)' }, pointLabels: { color: '#d4d4d4', font: { size: 11, family: "'Inter', sans-serif", weight: 'bold' } }, ticks: { display: false, min: 0 } } },
-            plugins: { legend: { position: 'bottom', labels: { color: '#a3a3a3', boxWidth: 12, padding: 20 } }, tooltip: { backgroundColor: "rgba(10, 10, 10, 0.9)", titleColor: "#fff", bodyColor: "#d4d4d4" } }
-          }
-        });
-      },
-
-      updateRadarChart() {
-        const chart = Chart.getChart("radarChart");
-        if (!chart) return;
-        const labels = ['Skrzydła', 'Podłoga', 'Zawieszenie i Hamulce', 'Nadwozie / Sidepody', 'Chłodzenie', 'Inne'];
-        const getTeamData = (teamName) => {
-          const data = [0, 0, 0, 0, 0, 0];
-          if (!teamName) return data;
-          this.upgrades.filter(u => u.team === teamName).forEach(u => {
-            const cat = this.getComponentCategory(u.component);
-            const idx = labels.indexOf(cat);
-            if(idx !== -1) data[idx]++;
-          });
-          return data;
-        };
-        chart.data.datasets[0].label = this.radarTeamA; chart.data.datasets[0].data = getTeamData(this.radarTeamA); chart.data.datasets[0].backgroundColor = this.getTeamColorHex(this.radarTeamA) + '50'; chart.data.datasets[0].borderColor = this.getTeamColorHex(this.radarTeamA); chart.data.datasets[0].pointBackgroundColor = this.getTeamColorHex(this.radarTeamA);
-        chart.data.datasets[1].label = this.radarTeamB; chart.data.datasets[1].data = getTeamData(this.radarTeamB); chart.data.datasets[1].backgroundColor = this.getTeamColorHex(this.radarTeamB) + '50'; chart.data.datasets[1].borderColor = this.getTeamColorHex(this.radarTeamB); chart.data.datasets[1].pointBackgroundColor = this.getTeamColorHex(this.radarTeamB);
-        chart.update();
-      },
-
       toggleChart() {
         this.showChart = !this.showChart;
         if (this.showChart) { setTimeout(() => { if (!Chart.getChart("timelineChart")) { this.initTimelineChart(); } }, 100); }
@@ -158,15 +84,22 @@
         sortedUpgrades.forEach(u => gpSet.add(u.grand_prix));
         const labels = Array.from(gpSet);
         const teams = Array.from(new Set(this.upgrades.map(u => u.team)));
+        
         const datasets = teams.map(teamName => {
           let cumulativeSum = 0;
           const dataPoints = labels.map(gp => {
-            const upgradesInGp = this.upgrades.filter(u => u.team === teamName && u.grand_prix === gp).length;
+            // Twardy filtr: zliczamy tylko poprawki, których powód (reason) NIE zawiera 'circuit'
+            const upgradesInGp = this.upgrades.filter(u => 
+                u.team === teamName && 
+                u.grand_prix === gp && 
+                !u.reason.toLowerCase().includes('circuit')
+            ).length;
             cumulativeSum += upgradesInGp;
             return cumulativeSum;
           });
           return { label: teamName, data: dataPoints, borderColor: this.getTeamColorHex(teamName), backgroundColor: this.getTeamColorHex(teamName), tension: 0.3, pointRadius: 4, pointHoverRadius: 6, borderWidth: 3 };
         });
+
         new Chart(ctx, {
           type: "line",
           data: { labels: labels.map(l => l.replace(" Grand Prix", "")), datasets: datasets },
@@ -299,10 +232,9 @@
   </div>
 
   <!-- ========================================== -->
-  <!-- ZAKŁADKA 3: LIVE TIMING (NOWOŚĆ)           -->
+  <!-- ZAKŁADKA 3: LIVE TIMING -->
   <!-- ========================================== -->
   <div x-show="activeTab === 'live'" x-transition.opacity.duration.400ms>
-    
     <div class="bg-surface border border-bordercol rounded-xl p-5 mb-8 shadow-sm">
       <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 border-b border-bordercol pb-4">
         <div>
@@ -310,10 +242,10 @@
             <span class="w-2.5 h-2.5 bg-f1red rounded-full animate-pulse"></span>
             Monitor Osiągów Na Żywo
           </h3>
-          <p class="text-xs text-neutral-500 mt-1">Połączenie z serwerem FastF1 API (Tryb: Demo / Mock Data)</p>
+          <p class="text-xs text-neutral-500 mt-1">Połączenie z serwerem FastF1 API (Wyścig zablokowany: Bahrajn 2024)</p>
         </div>
         <div class="bg-carbon border border-bordercol px-4 py-2 rounded-lg text-xs font-mono text-neutral-300">
-          Sesja: <span class="text-white font-bold">FP2 / KWALIFIKACJE</span>
+          Sesja: <span class="text-white font-bold">RACE / WYŚCIG</span>
         </div>
       </div>
 
@@ -363,7 +295,6 @@
                 </td>
                 <td class="p-3 text-neutral-300" x-text="driver.gap"></td>
                 
-                <!-- NOWE KOLUMNY SEKTORÓW -->
                 <td class="p-3 text-center text-neutral-400 text-xs font-semibold" x-text="driver.s1"></td>
                 <td class="p-3 text-center text-neutral-400 text-xs font-semibold" x-text="driver.s2"></td>
                 <td class="p-3 text-center text-neutral-400 text-xs font-semibold" x-text="driver.s3"></td>
@@ -384,10 +315,6 @@
           </tbody>
         </table>
       </div>
-
-    </div>
-    <div class="text-center mt-4">
-      <p class="text-xs text-neutral-500">To jest widok testowy (Mock). Do poprawnego działania wymagane jest postawienie serwera Pythona nasłuchującego pakietów FastF1.</p>
     </div>
   </div>
 
@@ -440,32 +367,12 @@
       </div>
     </div>
 
-    <!-- RADAR FILOZOFII -->
-    <div class="bg-surface border border-bordercol rounded-xl p-5 mb-8 shadow-sm">
-      <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 border-b border-bordercol pb-4">
-        <div>
-          <h3 class="text-sm uppercase font-bold text-neutral-300 tracking-widest">Radar Filozofii Rozwoju</h3>
-          <p class="text-xs text-neutral-500 mt-1">Gdzie zespoły inwestują najwięcej zasobów aerodynamicznych?</p>
-        </div>
-        <div class="flex flex-wrap justify-center items-center gap-3">
-          <select x-model="radarTeamA" @change="updateRadarChart()" class="bg-carbon border border-bordercol rounded-lg px-3 py-1.5 text-sm font-bold text-white outline-none focus:border-f1red">
-            <template x-for="team in Array.from(new Set(upgrades.map(u => u.team))).sort()" :key="'radarA-'+team"><option :value="team" x-text="team"></option></template>
-          </select>
-          <span class="text-neutral-600 font-black text-xs uppercase italic mx-1">VS</span>
-          <select x-model="radarTeamB" @change="updateRadarChart()" class="bg-carbon border border-bordercol rounded-lg px-3 py-1.5 text-sm font-bold text-white outline-none focus:border-f1red">
-            <template x-for="team in Array.from(new Set(upgrades.map(u => u.team))).sort()" :key="'radarB-'+team"><option :value="team" x-text="team"></option></template>
-          </select>
-        </div>
-      </div>
-      <div class="relative w-full h-[400px]"><canvas id="radarChart"></canvas></div>
-    </div>
-
-    <!-- WYKRES ZBROJEŃ -->
+    <!-- WYKRES ZBROJEŃ (Zaktualizowany tylko pod Performance) -->
     <div class="bg-surface border border-bordercol rounded-xl mb-8 shadow-sm overflow-hidden">
       <div @click="toggleChart()" class="p-5 cursor-pointer bg-carbon/40 hover:bg-carbon/60 transition flex justify-between items-center border-b border-transparent" :class="showChart ? 'border-bordercol' : ''">
         <div class="flex items-center gap-3">
           <span class="text-2xl">📈</span>
-          <h3 class="text-sm uppercase font-bold text-neutral-300 tracking-widest">Oś czasu ogólnego rozwoju (Kliknij, aby rozwinąć)</h3>
+          <h3 class="text-sm uppercase font-bold text-neutral-300 tracking-widest">Oś czasu aerodynamiki (Tylko "Performance")</h3>
         </div>
         <button class="text-neutral-400">
           <svg x-show="!showChart" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
@@ -474,7 +381,7 @@
       </div>
       <div x-show="showChart" x-transition.opacity.duration.300ms class="p-5 bg-surface" style="display: none;">
         <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-          <p class="text-[11px] text-neutral-400 uppercase tracking-widest text-center sm:text-left">💡 <span class="text-white font-bold">Wybór zespołów:</span> Kliknij w legendę pod wykresem lub użyj przycisków obok.</p>
+          <p class="text-[11px] text-neutral-400 uppercase tracking-widest text-center sm:text-left">💡 <span class="text-white font-bold">Czysty rozwój:</span> Pakiety "Circuit Specific" (np. skrzydła na Monzę) zostały ukryte.</p>
           <div class="flex items-center gap-2">
             <button @click="showAllTeams()" class="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-[11px] uppercase font-bold tracking-wider rounded border border-neutral-700 transition">Włącz wszystkie</button>
             <button @click="hideAllTeams()" class="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-[11px] uppercase font-bold tracking-wider rounded border border-neutral-700 transition">Wyłącz wszystkie</button>
@@ -579,6 +486,6 @@
       <div class="text-base font-bold text-white mb-1">Brak poprawek dla wybranych filtrów</div>
       <p class="text-xs text-neutral-400">Spróbuj wybrać inne Grand Prix, zresetować filtry lub wyczyścić pole wyszukiwania.</p>
     </div>
-  </div> <!-- Koniec Zakładki 2 -->
+  </div> 
 </div>
 {% endblock %}
