@@ -45,8 +45,8 @@
         }, 3000); 
       },
 
-      fetchLapData(lap) {
-        fetch(` https://prone-clinic-scoring.ngrok-free.dev -> http://localhost:5000 `, {
+     fetchLapData(lap) {
+        fetch(`https://prone-clinic-scoring.ngrok-free.dev/api/live?lap=${lap}`, {
           headers: {
             'ngrok-skip-browser-warning': 'true'
           }
