@@ -46,7 +46,11 @@
       },
 
       fetchLapData(lap) {
-        fetch(`https://f1-live-api-znjg.onrender.com/api/live?lap=${lap}`)
+        fetch(` https://prone-clinic-scoring.ngrok-free.dev -> http://localhost:5000 `, {
+          headers: {
+            'ngrok-skip-browser-warning': 'true'
+          }
+        })
           .then(res => res.json())
           .then(resData => {
             this.serverStatus = resData.status;
