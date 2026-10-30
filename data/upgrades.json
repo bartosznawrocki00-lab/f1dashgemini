@@ -5254,5 +5254,113 @@
     "description": "",
     "source_url": "https://www.fia.com/system/files/decision-document/2026_united_states_grand_prix_-_car_presentation_submissions.pdf",
     "pdf_date": "20000018"
+  },
+  {
+    "id": "b6a6db914c164f76",
+    "year": 2026,
+    "grand_prix": "Mexico_City Grand Prix",
+    "team": "McLaren",
+    "component": "Cooling Louvres",
+    "reason": "Circuit specific - Cooling Range",
+    "change_detail": "Larger Cooling Louvres",
+    "description": "",
+    "source_url": "https://www.fia.com/system/files/decision-document/2026_mexico_city_grand_prix_-_car_presentation_submissions.pdf",
+    "pdf_date": "20000019"
+  },
+  {
+    "id": "ecccb9e0ade14594",
+    "year": 2026,
+    "grand_prix": "Mexico_City Grand Prix",
+    "team": "Red Bull",
+    "component": "Engine Cover",
+    "reason": "Reliability",
+    "change_detail": "Additional cooling exit louvres",
+    "description": "",
+    "source_url": "https://www.fia.com/system/files/decision-document/2026_mexico_city_grand_prix_-_car_presentation_submissions.pdf",
+    "pdf_date": "20000019"
+  },
+  {
+    "id": "64f2777da54f0f64",
+    "year": 2026,
+    "grand_prix": "Mexico_City Grand Prix",
+    "team": "Red Bull",
+    "component": "Sidepod",
+    "reason": "Performance Local Load",
+    "change_detail": "Revised sidepod and floor to sidepod split line",
+    "description": "",
+    "source_url": "https://www.fia.com/system/files/decision-document/2026_mexico_city_grand_prix_-_car_presentation_submissions.pdf",
+    "pdf_date": "20000019"
+  },
+  {
+    "id": "7128a067e5a0ef10",
+    "year": 2026,
+    "grand_prix": "Mexico_City Grand Prix",
+    "team": "Ferrari",
+    "component": "Engine Cover",
+    "reason": "Circuit specific - Cooling Range",
+    "change_detail": "Enlarged rear bodywork exit, additional top sidepod louvre panels",
+    "description": "",
+    "source_url": "https://www.fia.com/system/files/decision-document/2026_mexico_city_grand_prix_-_car_presentation_submissions.pdf",
+    "pdf_date": "20000019"
+  },
+  {
+    "id": "a6f78b0347af70a6",
+    "year": 2026,
+    "grand_prix": "Mexico_City Grand Prix",
+    "team": "Ferrari",
+    "component": "Cooling Louvres",
+    "reason": "engine cooling capacity, at the expense of car",
+    "change_detail": "",
+    "description": "",
+    "source_url": "https://www.fia.com/system/files/decision-document/2026_mexico_city_grand_prix_-_car_presentation_submissions.pdf",
+    "pdf_date": "20000019"
+  },
+  {
+    "id": "7749d8e3fba1e45d",
+    "year": 2026,
+    "grand_prix": "Mexico_City Grand Prix",
+    "team": "Racing Bulls",
+    "component": "Coke/Engine Cover",
+    "reason": "Circuit specific - Cooling Range",
+    "change_detail": "Larger rear upper exit",
+    "description": "",
+    "source_url": "https://www.fia.com/system/files/decision-document/2026_mexico_city_grand_prix_-_car_presentation_submissions.pdf",
+    "pdf_date": "20000019"
+  },
+  {
+    "id": "cb822d1201876b01",
+    "year": 2026,
+    "grand_prix": "Mexico_City Grand Prix",
+    "team": "Racing Bulls",
+    "component": "Cooling Louvres",
+    "reason": "Circuit specific - Cooling Range",
+    "change_detail": "Extended louvre panel options",
+    "description": "",
+    "source_url": "https://www.fia.com/system/files/decision-document/2026_mexico_city_grand_prix_-_car_presentation_submissions.pdf",
+    "pdf_date": "20000019"
+  },
+  {
+    "id": "fa5ec9b3606bbe84",
+    "year": 2026,
+    "grand_prix": "Mexico_City Grand Prix",
+    "team": "Audi",
+    "component": "Rear Corner",
+    "reason": "Performance – Local Load",
+    "change_detail": "Updated rear brake duct deflector",
+    "description": "",
+    "source_url": "https://www.fia.com/system/files/decision-document/2026_mexico_city_grand_prix_-_car_presentation_submissions.pdf",
+    "pdf_date": "20000019"
+  },
+  {
+    "id": "77bd1762c40cbcf2",
+    "year": 2026,
+    "grand_prix": "Mexico_City Grand Prix",
+    "team": "Alpine",
+    "component": "Exhaust Tailpipe",
+    "reason": "Reliability",
+    "change_detail": "Reprofiled exhaust tailpipe vane",
+    "description": "",
+    "source_url": "https://www.fia.com/system/files/decision-document/2026_mexico_city_grand_prix_-_car_presentation_submissions.pdf",
+    "pdf_date": "20000019"
   }
 ]
