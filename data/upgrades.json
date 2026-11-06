@@ -5362,5 +5362,53 @@
     "description": "",
     "source_url": "https://www.fia.com/system/files/decision-document/2026_mexico_city_grand_prix_-_car_presentation_submissions.pdf",
     "pdf_date": "20000019"
+  },
+  {
+    "id": "f3966d121b76929c",
+    "year": 2026,
+    "grand_prix": "Sao_Paulo Grand Prix",
+    "team": "McLaren",
+    "component": "Front Wing",
+    "reason": "Performance - Flow Conditioning",
+    "change_detail": "New Front Wing",
+    "description": "",
+    "source_url": "https://www.fia.com/system/files/decision-document/2026_sao_paulo_grand_prix_-_car_presentation_submissions.pdf",
+    "pdf_date": "20000020"
+  },
+  {
+    "id": "6a7504826cd197a3",
+    "year": 2026,
+    "grand_prix": "Sao_Paulo Grand Prix",
+    "team": "McLaren",
+    "component": "Rear Wing",
+    "reason": "Performance – Local Load",
+    "change_detail": "New Rear Wing Assembly",
+    "description": "",
+    "source_url": "https://www.fia.com/system/files/decision-document/2026_sao_paulo_grand_prix_-_car_presentation_submissions.pdf",
+    "pdf_date": "20000020"
+  },
+  {
+    "id": "d66ab817d1affe46",
+    "year": 2026,
+    "grand_prix": "Sao_Paulo Grand Prix",
+    "team": "McLaren",
+    "component": "Beam Wing",
+    "reason": "Performance - Flow Conditioning",
+    "change_detail": "New Beam Wing",
+    "description": "",
+    "source_url": "https://www.fia.com/system/files/decision-document/2026_sao_paulo_grand_prix_-_car_presentation_submissions.pdf",
+    "pdf_date": "20000020"
+  },
+  {
+    "id": "f11dd4738abd2d5c",
+    "year": 2026,
+    "grand_prix": "Sao_Paulo Grand Prix",
+    "team": "McLaren",
+    "component": "Floor Furniture",
+    "reason": "Performance - Flow Conditioning",
+    "change_detail": "Updated Floor Furniture",
+    "description": "",
+    "source_url": "https://www.fia.com/system/files/decision-document/2026_sao_paulo_grand_prix_-_car_presentation_submissions.pdf",
+    "pdf_date": "20000020"
   }
 ]
